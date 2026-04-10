@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=820">
+    <meta property="og:title" content="ใบสั่งงาน - ป้ายสวยเด่น">
+    <meta property="og:description" content="ระบบใบสั่งงาน 1:1 พร้อมฐานข้อมูล">
+    
+    <title>ใบสั่งงาน - ป้ายสวยเด่น</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        /* ป้องกันไอโฟนขยายฟอนต์ */
+        html, body {
+            -webkit-text-size-adjust: 100%; 
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0; 
+            margin: 0;
+        }
+
+        .canva-box {
+            width: 800px; 
+            height: 800px;
+            background-color: white;
+            border: 3px solid #000;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        .header-row {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.2fr;
+            border-bottom: 2px solid #000;
+        }
+        .header-cell {
+            border-right: 2px solid #000;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            font-size: 16px; 
+            font-weight: 600;
+        }
+        .header-cell:last-child {
+            border-right: none;
+        }
+
+        .header-cell input[type="text"], 
+        .header-cell select {
+            border: none;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 18px;
+            flex: 1;
+            width: 100%;
+            margin-left: 5px;
+            background: transparent;
+            -webkit-appearance: none;
+            border-radius: 0;
+            color: black; 
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .checkbox-group input[type="checkbox"] {
+            transform: scale(1.3);
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        .date-wrapper {
+            position: relative;
+            flex: 1;
+            display: flex;
+            margin-left: 5px;
+            cursor: pointer;
+            min-height: 24px;
+        }
+        .date-wrapper input[type="text"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1;
+            pointer-events: none;
+            border: none;
+            padding: 0;
+            font-size: 16px;
+        }
+        .date-wrapper input[type="date"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0; 
+            color: transparent; 
+            background: transparent;
+            z-index: 2;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            -webkit-appearance: none;
+        }
+        .date-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+
+        .canvas-area {
+            flex: 1; 
+            position: relative;
+            cursor: pointer;
+            background-color: #fafafa;
+            min-height: 150px; 
+        }
+        .canvas-placeholder {
+            color: #aaa;
+            font-size: 24px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 10; 
+        }
+        
+        .image-gallery {
+            position: absolute; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: grid;
+            gap: 5px;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .image-gallery div.img-box {
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 4px;
+        }
+        
+        .image-gallery[data-count="1"] { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+        .image-gallery[data-count="2"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+        .image-gallery[data-count="3"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .image-gallery[data-count="3"] div.img-box:nth-child(3) { grid-column: 1 / span 2; }
+        .image-gallery[data-count="4"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .image-gallery[data-count="many"] { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+
+        .bottom-section {
+            border-top: 2px solid #000;
+            display: flex;
+            height: 32%; 
+            background-color: white;
+            z-index: 2; 
+            position: relative;
+        }
+        .bottom-left {
+            flex: 1.3;
+            padding: 5px 15px; 
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            gap: 4px; 
+            justify-content: center;
+            border-right: 2px solid #000;
+            box-sizing: border-box;
+        }
+        .bottom-right {
+            flex: 1;
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        
+        .bottom-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: 8px;
+        }
+        .bottom-row span {
+            white-space: nowrap; 
+        }
+        .inline-input {
+            flex: 1; 
+            min-width: 0; 
+            border: none;
+            border-bottom: 1px solid #000;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 16px;
+            background: transparent;
+            text-align: center;
+            -webkit-appearance: none;
+            border-radius: 0;
+            margin: 0;
+            padding: 2px;
+        }
+        
+        .note-label {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .note-textarea {
+            flex: 1;
+            width: 100%;
+            height: 100%; 
+            resize: none;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            background: transparent;
+            -webkit-appearance: none;
+            overflow-y: auto; 
+        }
+        .note-textarea:focus {
+            border: 1px solid #000;
+        }
+
+        .btn-save {
+            margin-top: 20px;
+            padding: 15px 40px; 
+            background-color: #059669; 
+            color: white;
+            font-size: 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Sarabun', sans-serif;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+        .btn-save:hover {
+            background-color: #047857;
+        }
+        .btn-save:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="canva-box" id="jobOrderBox">
+        
+        <div class="header-row">
+            <div class="header-cell">เพจ: <input type="text"></div>
+            <div class="header-cell">ชื่อ: 
+                <select id="salesName" onchange="checkUrgent(this)">
+                    <option value="">- เลือก -</option>
+                    <option value="จุ๋ม">จุ๋ม</option>
+                    <option value="จุ๋ม (ด่วน)">จุ๋ม (ด่วน)</option>
+                    <option value="กรีน">กรีน</option>
+                    <option value="กรีน (ด่วน)">กรีน (ด่วน)</option>
+                    <option value="ส้ม">ส้ม</option>
+                    <option value="ส้ม (ด่วน)">ส้ม (ด่วน)</option>
+                    <option value="เมย์">เมย์</option>
+                    <option value="เมย์ (ด่วน)">เมย์ (ด่วน)</option>
+                    <option value="อุ๋ม">อุ๋ม</option>
+                    <option value="อุ๋ม (ด่วน)">อุ๋ม (ด่วน)</option>
+                    <option value="เบล">เบล</option>
+                    <option value="เบล (ด่วน)">เบล (ด่วน)</option>
+                </select>
+            </div>
+            <div class="header-cell">No. <input type="text" placeholder="(ระบบจะรันให้อัตโนมัติ)" readonly style="font-size: 14px; color: gray;"></div>
+        </div>
+
+        <div class="header-row">
+            <div class="header-cell">
+                รับงาน: 
+                <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
+                    <input type="text" id="dispRecvDate" placeholder="วว/ดด/ปปปป" readonly>
+                    <input type="date" id="recvDate" onchange="formatDate(this, 'dispRecvDate')">
+                </div>
+            </div>
+            <div class="header-cell">
+                กำหนดส่ง: 
+                <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
+                    <input type="text" id="dispDueDate" placeholder="วว/ดด/ปปปป" readonly>
+                    <input type="date" onchange="formatDate(this, 'dispDueDate')">
+                </div>
+            </div>
+            <div class="header-cell checkbox-group">
+                <input type="checkbox" id="install"> <label for="install">ติดตั้ง</label>
+            </div>
+        </div>
+
+        <div class="header-row">
+            <div class="header-cell checkbox-group" style="justify-content: space-around;">
+                <label>💡 <input type="checkbox"></label>
+                <label>💡❌ <input type="checkbox"></label>
+            </div>
+            <div class="header-cell checkbox-group" style="justify-content: space-around;">
+                <label>ไฟขาว <input type="checkbox"></label>
+                <label>ไฟวอร์ม <input type="checkbox"></label>
+            </div>
+            <div class="header-cell checkbox-group">
+                <input type="checkbox" id="no-install"> <label for="no-install" style="color: red;">ไม่ติดตั้ง</label>
+            </div>
+        </div>
+
+        <div class="canvas-area" onclick="document.getElementById('imageUpload').click()">
+            <span class="canvas-placeholder" id="placeholderText">แตะเพื่อแนบรูปภาพ<br>(เลือกได้หลายรูป)</span>
+            <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;">
+            <div id="imageGallery" class="image-gallery"></div>
+        </div>
+
+        <div class="bottom-section">
+            <div class="bottom-left">
+                <div class="bottom-row">
+                    <span>รายละเอียด:</span> 
+                    <label class="checkbox-group"><input type="checkbox"> งานภายใน</label>
+                    <label class="checkbox-group"><input type="checkbox"> งานภายนอก</label>
+                </div>
+                <div class="bottom-row">
+                    <span>ขนาด:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
+                </div>
+                <div class="bottom-row">
+                    <span>รหัสสี:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
+                </div>
+                <div class="bottom-row">
+                    <span>โครงเหล็ก/สี:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
+                </div>
+                <div class="bottom-row">
+                    <span>สายไฟยาว</span> <input type="text" class="inline-input" style="width: 50px; flex: none; text-align: center;"> <span>ม.</span>
+                    <span style="margin-left: auto;">จุดปล่อยไฟ:</span>
+                    <label class="checkbox-group"><input type="checkbox"> ซ้าย</label>
+                    <label class="checkbox-group"><input type="checkbox"> ขวา</label>
+                </div>                    
+            </div>
+
+            <div class="bottom-right">
+                <div class="note-label">เพิ่มเติม:</div>
+                <textarea class="note-textarea" placeholder="พิมพ์รายละเอียดเพิ่มเติมตรงนี้..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-save" onclick="saveAsImageAndUpload()">💾 บันทึกเป็นรูปภาพและส่งเข้าฐานข้อมูล</button>
+
+    <script>
+        // API URL ของคุณมิ้นท์
+        const API_URL = "https://script.google.com/macros/s/AKfycbyJ811HReZ_WWg-8nDyM8U7nHFyXG9y8V1TZ-GmifJTscCHSiN5nbTyVBaB_L9F7MdSpQ/exec";
+
+        function checkUrgent(selectElement) {
+            if (selectElement.value.includes('(ด่วน)')) {
+                selectElement.style.backgroundColor = '#ef4444'; 
+                selectElement.style.color = 'black';
+                selectElement.style.borderRadius = '4px';
+                selectElement.style.padding = '2px 5px';
+            } else {
+                selectElement.style.backgroundColor = 'transparent';
+                selectElement.style.color = 'inherit';
+                selectElement.style.padding = '0';
+            }
+        }
+
+        document.getElementById('imageUpload').addEventListener('change', function(event) {
+            const files = event.target.files;
+            const gallery = document.getElementById('imageGallery');
+            const placeholder = document.getElementById('placeholderText');
+
+            if (files.length > 0) {
+                placeholder.style.display = 'none'; 
+                gallery.innerHTML = ''; 
+
+                if (files.length === 1) {
+                    gallery.setAttribute('data-count', '1');
+                } else if (files.length === 2) {
+                    gallery.setAttribute('data-count', '2');
+                } else if (files.length <= 4) {
+                    gallery.setAttribute('data-count', '3'); 
+                } else {
+                    gallery.setAttribute('data-count', 'many'); 
+                }
+
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const div = document.createElement('div');
+                        div.className = 'img-box';
+                        div.style.backgroundImage = `url('${e.target.result}')`;
+                        gallery.appendChild(div);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        function saveAsImageAndUpload() {
+            const element = document.getElementById('jobOrderBox');
+            const placeholder = document.getElementById('placeholderText');
+            const btnSave = document.querySelector('.btn-save');
+            
+            const originalDisplay = placeholder.style.display;
+            placeholder.style.display = 'none';
+
+            // เปลี่ยนปุ่มเป็นกำลังโหลด
+            const originalBtnText = btnSave.innerHTML;
+            btnSave.innerHTML = "⏳ กำลังบันทึกขึ้นระบบ... (รอสักครู่)";
+            btnSave.disabled = true;
+
+            html2canvas(element, { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: "#ffffff",
+                windowWidth: 800,
+                onclone: function(clonedDoc) {
+                    const clonedBox = clonedDoc.getElementById('jobOrderBox');
+                    clonedBox.style.width = '800px';
+                    clonedBox.style.height = '800px';
+                    clonedBox.style.margin = '0';
+                    
+                    const clonedPlaceholderText = clonedDoc.getElementById('placeholderText');
+                    if (clonedPlaceholderText) {
+                        clonedPlaceholderText.style.display = 'none';
+                    }
+
+                    const textareas = clonedDoc.querySelectorAll('.note-textarea');
+                    textareas.forEach(textarea => {
+                        const div = clonedDoc.createElement('div');
+                        div.textContent = textarea.value; 
+                        div.style.width = '100%';
+                        div.style.height = '100%';
+                        div.style.border = '1px dashed #ccc';
+                        div.style.borderRadius = '4px';
+                        div.style.padding = '10px'; 
+                        div.style.boxSizing = 'border-box';
+                        div.style.fontFamily = "'Sarabun', sans-serif";
+                        div.style.fontSize = '16px';
+                        div.style.whiteSpace = 'pre-wrap';
+                        div.style.wordWrap = 'break-word';
+                        textarea.parentNode.replaceChild(div, textarea);
+                    });
+                }
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                
+                const salesName = document.getElementById('salesName').value || 'Unknown';
+                const now = new Date();
+                const d = String(now.getDate()).padStart(2, '0');
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const y = now.getFullYear();
+                const timeStamp = now.getTime();
+                const fileName = `JobOrder_${salesName}_${y}${m}${d}_${timeStamp}`;
+                
+                // เตรียมข้อมูลยิงขึ้น Database
+                const payload = {
+                    base64: imgData.split(',')[1],
+                    fileName: fileName
+                };
+
+                // ส่ง API ไปหลังบ้าน
+                fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8",
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === "success") {
+                        alert("✅ บันทึกลงฐานข้อมูลสำเร็จ!\nหมายเลข Run No. ของคุณคือ: " + data.runNo);
+                        
+                        // ดาวน์โหลดรูปลงเครื่องเหมือนเดิม
+                        const link = document.createElement('a');
+                        link.download = `JobOrder_${data.runNo}_${salesName}.png`;
+                        link.href = imgData;
+                        link.click();
+                    } else {
+                        alert("❌ เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์: " + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert("❌ เชื่อมต่อฐานข้อมูลไม่สำเร็จ กรุณาลองใหม่: " + error);
+                })
+                .finally(() => {
+                    // คืนค่าปุ่มกลับมาเหมือนเดิม
+                    btnSave.innerHTML = originalBtnText;
+                    btnSave.disabled = false;
+                    
+                    if (document.getElementById('imageGallery').childNodes.length === 0) {
+                        placeholder.style.display = originalDisplay;
+                    }
+                });
+            });
+        }
+        
+        function formatDate(input, dispId) {
+            if (!input.value) {
+                document.getElementById(dispId).value = '';
+                return;
+            }
+            const parts = input.value.split('-'); 
+            document.getElementById(dispId).value = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        window.onload = function() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            
+            const recvDateInput = document.getElementById('recvDate');
+            if(recvDateInput) {
+                recvDateInput.value = `${yyyy}-${mm}-${dd}`;
+                formatDate(recvDateInput, 'dispRecvDate');
+            }
+        };
+    </script>
+
+</body>
+</html>
