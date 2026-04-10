@@ -11,7 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* ป้องกันไอโฟนขยายฟอนต์ */
         html, body {
             -webkit-text-size-adjust: 100%; 
         }
@@ -430,7 +429,6 @@
             const originalDisplay = placeholder.style.display;
             placeholder.style.display = 'none';
 
-            // เปลี่ยนปุ่มเป็นกำลังโหลด
             const originalBtnText = btnSave.innerHTML;
             btnSave.innerHTML = "⏳ กำลังบันทึกขึ้นระบบ... (รอสักครู่)";
             btnSave.disabled = true;
@@ -451,10 +449,13 @@
                         clonedPlaceholderText.style.display = 'none';
                     }
 
+                    // --- แก้ไขบัคตัดบรรทัดเด็ดขาดตรงนี้ ---
                     const textareas = clonedDoc.querySelectorAll('.note-textarea');
                     textareas.forEach(textarea => {
                         const div = clonedDoc.createElement('div');
-                        div.textContent = textarea.value; 
+                        // บังคับเปลี่ยนการกด Enter (\n) ให้เป็นแท็ก <br> ของ HTML โดยตรง
+                        div.innerHTML = textarea.value.replace(/\n/g, '<br>'); 
+                        
                         div.style.width = '100%';
                         div.style.height = '100%';
                         div.style.border = '1px dashed #ccc';
@@ -463,8 +464,8 @@
                         div.style.boxSizing = 'border-box';
                         div.style.fontFamily = "'Sarabun', sans-serif";
                         div.style.fontSize = '16px';
-                        div.style.whiteSpace = 'pre-wrap';
                         div.style.wordWrap = 'break-word';
+                        
                         textarea.parentNode.replaceChild(div, textarea);
                     });
                 }
@@ -479,13 +480,11 @@
                 const timeStamp = now.getTime();
                 const fileName = `JobOrder_${salesName}_${y}${m}${d}_${timeStamp}`;
                 
-                // เตรียมข้อมูลยิงขึ้น Database
                 const payload = {
                     base64: imgData.split(',')[1],
                     fileName: fileName
                 };
 
-                // ส่ง API ไปหลังบ้าน
                 fetch(API_URL, {
                     method: "POST",
                     headers: {
@@ -498,7 +497,6 @@
                     if(data.status === "success") {
                         alert("✅ บันทึกลงฐานข้อมูลสำเร็จ!\nหมายเลข Run No. ของคุณคือ: " + data.runNo);
                         
-                        // ดาวน์โหลดรูปลงเครื่องเหมือนเดิม
                         const link = document.createElement('a');
                         link.download = `JobOrder_${data.runNo}_${salesName}.png`;
                         link.href = imgData;
@@ -511,7 +509,6 @@
                     alert("❌ เชื่อมต่อฐานข้อมูลไม่สำเร็จ กรุณาลองใหม่: " + error);
                 })
                 .finally(() => {
-                    // คืนค่าปุ่มกลับมาเหมือนเดิม
                     btnSave.innerHTML = originalBtnText;
                     btnSave.disabled = false;
                     
