@@ -203,6 +203,9 @@
             btnSave.innerHTML = "⏳ กำลังบันทึกและรันเลข... (รอสักครู่)";
             btnSave.disabled = true;
 
+            // 👇 เติมบรรทัดนี้ลงไปเลยครับ
+if(runNoInput) runNoInput.value = "";
+
             // ฟังก์ชันแคปรูป โดยรับค่าเลขมารันด้วย
             const takeSnapshot = (currentRunNo = "") => {
                 return html2canvas(element, { 
@@ -294,6 +297,8 @@
                             link.click();
 
                             alert("✅ บันทึกลงฐานข้อมูลสำเร็จ!\nหมายเลข Run No. ของคุณคือ: " + data.runNo);
+                            // 👇 เติมบรรทัดนี้ลงไป เพื่อรีเฟรชหน้าเว็บ
+                            window.location.reload();
                         });
                         
                     } else {
