@@ -86,7 +86,7 @@
                 กำหนดส่ง: 
                 <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
                     <input type="text" id="dispDueDate" placeholder="วว/ดด/ปปปป" readonly>
-                    <input type="date" onchange="formatDate(this, 'dispDueDate')">
+                    <input type="date" id="dueDate" onchange="formatDate(this, 'dispDueDate')">
                 </div>
             </div>
             <div class="header-cell checkbox-group">
@@ -190,63 +190,48 @@
             }
         });
 
+        // ============================================================
+        // ฟังก์ชันใหม่: ใช้ 2 ขั้นตอน (ขอเลขก่อน → แคปรูปพร้อมเลข → ส่งเซฟ)
+        // ============================================================
         function saveAsImageAndUpload() {
             const element = document.getElementById('jobOrderBox');
             const placeholder = document.getElementById('placeholderText');
             const btnSave = document.querySelector('.btn-save');
-            const runNoInput = document.getElementById('runNoDisplay'); 
-            
-            const originalDisplay = placeholder.style.display;
-            placeholder.style.display = 'none';
+            const runNoInput = document.getElementById('runNoDisplay');
+            const salesName = document.getElementById('salesName').value || 'Unknown';
 
+            const originalDisplay = placeholder.style.display;
             const originalBtnText = btnSave.innerHTML;
-            btnSave.innerHTML = "⏳ กำลังบันทึกและรันเลข... (รอสักครู่)";
+
+            placeholder.style.display = 'none';
             btnSave.disabled = true;
 
-            // 👇 เติมบรรทัดนี้ลงไปเลยครับ
-if(runNoInput) runNoInput.innerHTML = "";
-
-            // ฟังก์ชันแคปรูป โดยรับค่าเลขมารันด้วย
-            const takeSnapshot = (currentRunNo = "") => {
-                return html2canvas(element, { 
-                    scale: 2, 
-                    useCORS: true, 
+            // ฟังก์ชันแคปรูป (เลขจะถูกกรอกในหน้าเว็บก่อนเรียกแล้ว)
+            const takeSnapshot = () => {
+                return html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
                     backgroundColor: "#ffffff",
                     windowWidth: 800,
-                    onclone: function(clonedDoc) {
+                    onclone: function (clonedDoc) {
                         const clonedBox = clonedDoc.getElementById('jobOrderBox');
                         clonedBox.style.width = '800px';
                         clonedBox.style.height = '800px';
                         clonedBox.style.margin = '0';
-                        
+
                         const clonedPlaceholderText = clonedDoc.getElementById('placeholderText');
                         if (clonedPlaceholderText) clonedPlaceholderText.style.display = 'none';
 
-                        // --- บังคับฝังเลข Run No. ลงในรูปภาพ ---
-                        if (currentRunNo) {
-                            const clonedRunNoInput = clonedDoc.getElementById('runNoDisplay');
-                            if (clonedRunNoInput) {
-                                const divNo = clonedDoc.createElement('div');
-                                divNo.textContent = currentRunNo; // ยัดเลขที่ได้จากหลังบ้านใส่เข้าไป
-                                divNo.style.fontFamily = "'Sarabun', sans-serif";
-                                divNo.style.fontSize = '18px';
-                                divNo.style.fontWeight = 'bold';
-                                divNo.style.color = 'black';
-                                divNo.style.paddingLeft = '5px';
-                                clonedRunNoInput.parentNode.replaceChild(divNo, clonedRunNoInput);
-                            }
-                        }
-
-                        // บังคับขึ้นบรรทัดใหม่
+                        // แปลง textarea เป็น div เพื่อให้ขึ้นบรรทัดใหม่ถูกต้องในรูป
                         const textareas = clonedDoc.querySelectorAll('.note-textarea');
                         textareas.forEach(textarea => {
                             const div = clonedDoc.createElement('div');
-                            div.innerHTML = textarea.value.replace(/\n/g, '<br>'); 
+                            div.innerHTML = textarea.value.replace(/\n/g, '<br>');
                             div.style.width = '100%';
                             div.style.height = '100%';
                             div.style.border = '1px dashed #ccc';
                             div.style.borderRadius = '4px';
-                            div.style.padding = '10px'; 
+                            div.style.padding = '10px';
                             div.style.boxSizing = 'border-box';
                             div.style.fontFamily = "'Sarabun', sans-serif";
                             div.style.fontSize = '16px';
@@ -257,64 +242,80 @@ if(runNoInput) runNoInput.innerHTML = "";
                 }).then(canvas => canvas.toDataURL('image/png'));
             };
 
-            // 1. แคปรูปรอบแรก (ยังไม่มีเลข) ส่งไปหลังบ้านเพื่อรันเลข
-            takeSnapshot("").then(imgData => {
-                const salesName = document.getElementById('salesName').value || 'Unknown';
-                const now = new Date();
-                const d = String(now.getDate()).padStart(2, '0');
-                const m = String(now.getMonth() + 1).padStart(2, '0');
-                const y = now.getFullYear();
-                const timeStamp = now.getTime();
-                const fileName = `JobOrder_${salesName}_${y}${m}${d}_${timeStamp}`;
-                
-                const payload = {
-                    base64: imgData.split(',')[1],
-                    fileName: fileName
-                };
+            // ====== ขั้นตอนที่ 1: ขอเลข Run No. จากหลังบ้านก่อน ======
+            btnSave.innerHTML = "⏳ กำลังขอเลขใบงาน...";
 
-                fetch(API_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload)
+            fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({
+                    action: "getRunNo",
+                    salesName: salesName
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.status === "success") {
-                        
-                        // เอาเลขมาโชว์ในหน้าเว็บให้เซลล์เห็น
-                        if(runNoInput) {
-                            runNoInput.value = data.runNo;
-                            runNoInput.style.color = "black";
-                            runNoInput.style.fontWeight = "bold";
-                            runNoInput.style.fontSize = "18px";
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "success") {
+                    throw new Error("ขอเลขไม่สำเร็จ: " + (data.message || "ไม่ทราบสาเหตุ"));
+                }
+
+                const runNo = data.runNo;
+                const rowIndex = data.rowIndex;
+
+                // ====== ขั้นตอนที่ 2: ฝังเลขในหน้าเว็บ + แคปรูป ======
+                runNoInput.value = runNo;
+                runNoInput.style.color = "black";
+                runNoInput.style.fontWeight = "bold";
+                runNoInput.style.fontSize = "18px";
+
+                btnSave.innerHTML = "📸 กำลังสร้างรูปใบงาน...";
+
+                return takeSnapshot().then(imgData => {
+                    // ====== ขั้นตอนที่ 3: ส่งรูปไปเซฟใน Drive + อัปเดต Sheet ======
+                    btnSave.innerHTML = "☁️ กำลังอัปโหลดรูป...";
+
+                    const now = new Date();
+                    const d = String(now.getDate()).padStart(2, '0');
+                    const m = String(now.getMonth() + 1).padStart(2, '0');
+                    const y = now.getFullYear();
+                    const timeStamp = now.getTime();
+                    const fileName = `JobOrder_${salesName}_${y}${m}${d}_${timeStamp}`;
+
+                    return fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "saveImage",
+                            base64: imgData.split(',')[1],
+                            fileName: fileName,
+                            rowIndex: rowIndex,
+                            runNo: runNo
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(saveData => {
+                        if (saveData.status !== "success") {
+                            throw new Error("บันทึกรูปไม่สำเร็จ: " + (saveData.message || "ไม่ทราบสาเหตุ"));
                         }
 
-                        // 2. ได้เลขมาแล้ว! สั่งแคปรูปรอบสอง (รอบนี้ยัดเลขเข้าไปในรูปด้วย) แล้วเซฟลงมือถือ
-                        takeSnapshot(data.runNo).then(finalImgData => {
-                            const link = document.createElement('a');
-                            link.download = `JobOrder_${data.runNo}_${salesName}.png`;
-                            link.href = finalImgData;
-                            link.click();
+                        // ====== ขั้นตอนที่ 4: ดาวน์โหลดรูปลงเครื่อง ======
+                        const link = document.createElement('a');
+                        link.download = `JobOrder_${runNo.replace('/', '-')}_${salesName}.png`;
+                        link.href = imgData;
+                        link.click();
 
-                            alert("✅ บันทึกลงฐานข้อมูลสำเร็จ!\nหมายเลข Run No. ของคุณคือ: " + data.runNo);
-                            // 👇 เติมบรรทัดนี้ลงไป เพื่อรีเฟรชหน้าเว็บ
-                            window.location.reload();
-                        });
-                        
-                    } else {
-                        alert("❌ เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์: " + data.message);
-                    }
-                })
-                .catch(error => {
-                    alert("❌ เชื่อมต่อฐานข้อมูลไม่สำเร็จ กรุณาลองใหม่: " + error);
-                })
-                .finally(() => {
-                    btnSave.innerHTML = originalBtnText;
-                    btnSave.disabled = false;
-                    if (document.getElementById('imageGallery').childNodes.length === 0) {
-                        placeholder.style.display = originalDisplay;
-                    }
+                        alert("✅ บันทึกสำเร็จ!\nหมายเลข Run No. ของคุณคือ: " + runNo);
+                        window.location.reload();
+                    });
                 });
+            })
+            .catch(error => {
+                alert("❌ เกิดข้อผิดพลาด: " + error.message + "\n\nกรุณาลองใหม่อีกครั้ง");
+                btnSave.innerHTML = originalBtnText;
+                btnSave.disabled = false;
+                if (document.getElementById('imageGallery').childNodes.length === 0) {
+                    placeholder.style.display = originalDisplay;
+                }
             });
         }
         
