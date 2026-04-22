@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=820">
-    <meta property="og:title" content="ระบบใบสั่งงาน / ใบส่งงาน">
-    <meta property="og:description" content="ระบบใบสั่งงาน / ใบส่งงาน">
+    <meta property="og:title" content="ระบบใบสั่งงาน / ใบส่งของ">
+    <meta property="og:description" content="ระบบใบสั่งงาน / ใบส่งของ">
     
-    <title>ระบบใบสั่งงาน / ใบส่งงาน</title>
+    <title>ระบบใบสั่งงาน / ใบส่งของ</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
@@ -173,7 +173,7 @@
         .note-textarea { flex: 1; width: 100%; height: 100%; resize: none; border: 1px dashed #ccc; border-radius: 4px; padding: 10px; font-family: 'Sarabun', sans-serif; font-size: 20px; box-sizing: border-box; outline: none; background: transparent; -webkit-appearance: none; overflow-y: auto; }
         .note-textarea:focus { border: 1px solid #000; }
 
-        /* ===== ใบส่งงาน A4 แนวตั้ง ===== */
+        /* ===== ใบส่งของ A4 แนวตั้ง ===== */
         .delivery-box {
             width: 800px;
             height: 1131px;
@@ -340,7 +340,7 @@
     <!-- ===== แท็บสลับ ===== -->
     <div class="tab-container">
         <button class="tab-btn active" id="tabJobOrder" onclick="switchTab('jobOrder')">📋 ใบสั่งงาน</button>
-        <button class="tab-btn" id="tabDelivery" onclick="switchTab('delivery')">📦 ใบส่งงาน</button>
+        <button class="tab-btn" id="tabDelivery" onclick="switchTab('delivery')">📦 ใบส่งของ</button>
     </div>
 
     <!-- ===== โหมด 1: ใบสั่งงาน ===== -->
@@ -445,7 +445,7 @@
         </div>
     </div>
 
-    <!-- ===== โหมด 2: ใบส่งงาน A4 แนวตั้ง ===== -->
+    <!-- ===== โหมด 2: ใบส่งของ A4 แนวตั้ง ===== -->
     <div id="deliveryMode" class="hidden">
         <div class="delivery-box" id="deliveryBox">
 
@@ -487,7 +487,7 @@
         </div>
 
         <div style="text-align: center;">
-            <button class="btn-save" onclick="saveDeliveryNote()">💾 บันทึกใบส่งงาน</button>
+            <button class="btn-save" onclick="saveDeliveryNote()">💾 บันทึกใบส่งของ</button>
         </div>
     </div>
 
@@ -835,7 +835,7 @@
         }
 
         // ============================================================
-        // บันทึก "ใบส่งงาน" (เซฟเข้า Sheet + Drive → แล้ว share/save)
+        // บันทึก "ใบส่งของ" (เซฟเข้า Sheet + Drive → แล้ว share/save)
         // ============================================================
         function saveDeliveryNote() {
             const btnSave = document.querySelector('#deliveryMode .btn-save');
@@ -861,7 +861,7 @@
 
             const originalBtnText = btnSave.innerHTML;
             btnSave.disabled = true;
-            btnSave.innerHTML = "📸 กำลังสร้างรูปใบส่งงาน...";
+            btnSave.innerHTML = "📸 กำลังสร้างรูปใบส่งของ...";
 
             captureElement('deliveryBox', 800, 1131)
                 .then(imgData => {
@@ -893,7 +893,7 @@
                             throw new Error("บันทึกไม่สำเร็จ: " + (saveData.message || "ไม่ทราบสาเหตุ"));
                         }
                         btnSave.innerHTML = "💾 กำลังเตรียมรูป...";
-                        return deliverImageToUser(imgData, fileName + ".png", `ใบส่งงาน - ${sender}`);
+                        return deliverImageToUser(imgData, fileName + ".png", `ใบส่งของ - ${sender}`);
                     });
                 })
                 .catch(error => {
