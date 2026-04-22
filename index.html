@@ -3,16 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=820">
-    <meta property="og:title" content="ระบบใบสั่งงาน">
-    <meta property="og:description" content="ใบสั่งงาน">
+    <meta property="og:title" content="ระบบใบสั่งงาน / ใบส่งงาน">
+    <meta property="og:description" content="ระบบใบสั่งงาน / ใบส่งงาน">
     
-    <title>ระบบใบสั่งงาน</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <title>ระบบใบสั่งงาน / ใบส่งงาน</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         html, body { -webkit-text-size-adjust: 100%; }
         body { font-family: 'Sarabun', sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px 0; margin: 0; }
+
+        /* ===== แท็บสลับโหมด ===== */
+        .tab-container {
+            display: flex;
+            gap: 0;
+            width: 800px;
+            margin-bottom: 15px;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            background-color: #cbd5e1;
+            color: #475569;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            background-color: #059669;
+            color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            background-color: #94a3b8;
+            color: white;
+        }
+
+        /* ===== ใบสั่งงาน (เดิม) ===== */
         .canva-box { width: 800px; height: 800px; background-color: white; border: 3px solid #000; display: flex; flex-direction: column; box-sizing: border-box; position: relative; margin: 0 auto; }
         .header-row { display: grid; grid-template-columns: 2fr 2fr 1.2fr; border-bottom: 2px solid #000; }
         .header-cell { border-right: 2px solid #000; padding: 6px 10px; display: flex; align-items: center; font-size: 18px; font-weight: 600; }
@@ -24,16 +57,112 @@
         .date-wrapper input[type="text"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: white; z-index: 1; pointer-events: none; border: none; padding: 0; font-size: 18px; }
         .date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; color: transparent; background: transparent; z-index: 2; cursor: pointer; border: none; padding: 0; -webkit-appearance: none; }
         .date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; }
-        .canvas-area { flex: 1; position: relative; cursor: pointer; background-color: #fafafa; min-height: 150px; }
-        .canvas-placeholder { color: #aaa; font-size: 24px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 10; }
-        .image-gallery { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: grid; gap: 5px; padding: 5px; box-sizing: border-box; }
-        .image-gallery div.img-box { width: 100%; height: 100%; background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: 4px; }
-        .image-gallery[data-count="1"] { grid-template-columns: 1fr; grid-template-rows: 1fr; }
-        .image-gallery[data-count="2"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+
+        /* ===== Canvas area ใหม่ (มีปุ่มลบ/เพิ่มรูป) ===== */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background-color: #fafafa;
+            min-height: 150px;
+            overflow: hidden;
+        }
+        .canvas-area.empty { cursor: pointer; }
+        .canvas-placeholder {
+            color: #aaa;
+            font-size: 24px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            width: 100%;
+        }
+        .image-gallery {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: grid;
+            gap: 5px;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .image-gallery .img-slot {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .image-gallery .img-box {
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 4px;
+        }
+        /* ปุ่มลบรูป (X) */
+        .img-slot .btn-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: rgba(220, 38, 38, 0.95);
+            color: white;
+            border: 2px solid white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            padding: 0;
+            line-height: 1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .img-slot .btn-remove:hover { background-color: #b91c1c; }
+        /* ปุ่มเพิ่มรูป (+) */
+        .img-slot.add-slot {
+            background-color: #e5e7eb;
+            border: 2px dashed #9ca3af;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            color: #6b7280;
+            font-weight: 300;
+        }
+        .img-slot.add-slot:hover { background-color: #d1d5db; }
+        .img-slot.add-slot .add-label {
+            font-size: 16px;
+            margin-top: -5px;
+            color: #6b7280;
+        }
+        .img-slot.add-slot .add-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        /* Grid layouts สำหรับจำนวนรูป + ช่อง "+" (data-count = รูปจริง ไม่รวมปุ่ม +) */
+        /* มี 1 รูป → 1 รูป + ปุ่ม+ = 2 ช่อง */
+        .image-gallery[data-count="1"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+        /* มี 2 รูป → 2 รูป + ปุ่ม+ = 3 ช่อง (2x2 ปุ่ม+อยู่แถว 2 เต็มความกว้าง) */
+        .image-gallery[data-count="2"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .image-gallery[data-count="2"] .img-slot.add-slot { grid-column: 1 / span 2; }
+        /* มี 3 รูป → 3 รูป + ปุ่ม+ = 4 ช่อง (2x2) */
         .image-gallery[data-count="3"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-        .image-gallery[data-count="3"] div.img-box:nth-child(3) { grid-column: 1 / span 2; }
-        .image-gallery[data-count="4"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-        .image-gallery[data-count="many"] { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+        /* มี 4 รูป → 4 รูป + ปุ่ม+ = 5 ช่อง (3x2) */
+        .image-gallery[data-count="4"] { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; }
+        /* 5+ รูป → 3x2 */
+        .image-gallery[data-count="5"] { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; }
+        .image-gallery[data-count="many"] { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); }
+
         .bottom-section { border-top: 2px solid #000; display: flex; height: 32%; background-color: white; z-index: 2; position: relative; }
         .bottom-left { flex: 1.3; padding: 5px 15px; font-size: 18px; font-weight: 600; display: flex; flex-direction: column; gap: 4px; justify-content: center; border-right: 2px solid #000; box-sizing: border-box; }
         .bottom-right { flex: 1; padding: 10px 15px; display: flex; flex-direction: column; box-sizing: border-box; }
@@ -43,112 +172,501 @@
         .note-label { font-weight: 600; font-size: 18px; margin-bottom: 5px; }
         .note-textarea { flex: 1; width: 100%; height: 100%; resize: none; border: 1px dashed #ccc; border-radius: 4px; padding: 10px; font-family: 'Sarabun', sans-serif; font-size: 20px; box-sizing: border-box; outline: none; background: transparent; -webkit-appearance: none; overflow-y: auto; }
         .note-textarea:focus { border: 1px solid #000; }
+
+        /* ===== ใบส่งงาน A4 แนวตั้ง ===== */
+        .delivery-box {
+            width: 800px;
+            height: 1131px;
+            background-color: white;
+            border: 3px solid #000;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+        }
+        .delivery-warning {
+            background-color: white;
+            color: #dc2626;
+            font-size: 36px;
+            font-weight: 700;
+            text-align: center;
+            padding: 22px 10px;
+            border-bottom: 3px solid #000;
+            letter-spacing: 0.5px;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+        .delivery-sender {
+            padding: 18px 25px;
+            border-bottom: 2px solid #000;
+            font-size: 22px;
+        }
+        .delivery-sender .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .delivery-sender .row:last-child { margin-bottom: 0; }
+        .delivery-sender .label {
+            font-weight: 700;
+            white-space: nowrap;
+            font-size: 24px;
+        }
+        .delivery-sender select {
+            border: none;
+            border-bottom: 2px solid #000;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            flex: 1;
+            background: transparent;
+            -webkit-appearance: none;
+            border-radius: 0;
+            padding: 4px 6px;
+            color: black;
+        }
+        .delivery-sender .address {
+            font-size: 20px;
+            line-height: 1.5;
+            color: #333;
+        }
+        .delivery-canvas-area {
+            flex: 1;
+            position: relative;
+            background-color: #fafafa;
+            min-height: 300px;
+            border-bottom: 2px solid #000;
+            overflow: hidden;
+        }
+        .delivery-canvas-area.empty { cursor: pointer; }
+        .delivery-receiver {
+            padding: 20px 25px;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .delivery-receiver .label {
+            font-weight: 700;
+            font-size: 26px;
+            margin-bottom: 5px;
+        }
+        .delivery-receiver textarea {
+            flex: 1;
+            width: 100%;
+            resize: none;
+            border: 1px dashed #999;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 22px;
+            box-sizing: border-box;
+            outline: none;
+            background: transparent;
+            -webkit-appearance: none;
+            line-height: 1.5;
+        }
+        .delivery-receiver textarea:focus { border: 2px solid #000; }
+        .sender-phone-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .sender-phone-row .phone-label {
+            font-weight: 700;
+            font-size: 22px;
+            white-space: nowrap;
+        }
+        .sender-phone-row input {
+            flex: 1;
+            border: none;
+            border-bottom: 2px solid #000;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+            padding: 6px 8px;
+            background: transparent;
+            -webkit-appearance: none;
+            border-radius: 0;
+            color: black;
+        }
+        .sender-phone-row input:focus {
+            border-bottom: 3px solid #059669;
+        }
+        .sender-phone-row input.error {
+            border-bottom: 3px solid #dc2626;
+            background-color: #fee2e2;
+        }
+
+        /* ===== ปุ่มบันทึก ===== */
         .btn-save { margin-top: 20px; padding: 15px 40px; background-color: #059669; color: white; font-size: 20px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; }
         .btn-save:hover { background-color: #047857; }
         .btn-save:disabled { background-color: #9ca3af; cursor: not-allowed; box-shadow: none; }
+
+        /* ===== Modal แสดงรูป ===== */
+        .result-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .result-modal.active { display: flex; }
+        .result-modal-title { color: white; font-size: 20px; margin-bottom: 10px; text-align: center; font-weight: 600; }
+        .result-modal-hint { color: #fbbf24; font-size: 18px; margin-bottom: 15px; text-align: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 8px; border: 2px dashed #fbbf24; }
+        .result-modal-img { max-width: 100%; max-height: 60vh; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); margin-bottom: 20px; }
+        .result-modal-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .result-modal-btn { padding: 12px 24px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif; font-weight: 600; }
+        .result-modal-btn.primary { background-color: #059669; color: white; }
+        .result-modal-btn.secondary { background-color: #6b7280; color: white; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="canva-box" id="jobOrderBox">
-        
-        <div class="header-row">
-            <div class="header-cell">เพจ: <input type="text"></div>
-            <div class="header-cell">ชื่อ: 
-                <select id="salesName" onchange="checkUrgent(this)">
-                    <option value="">- เลือก -</option>
-                    <option value="จุ๋ม">จุ๋ม</option>
-                    <option value="จุ๋ม (ด่วน)">จุ๋ม (ด่วน)</option>
-                    <option value="กรีน">กรีน</option>
-                    <option value="กรีน (ด่วน)">กรีน (ด่วน)</option>
-                    <option value="ส้ม">ส้ม</option>
-                    <option value="ส้ม (ด่วน)">ส้ม (ด่วน)</option>
-                    <option value="เมย์">เมย์</option>
-                    <option value="เมย์ (ด่วน)">เมย์ (ด่วน)</option>
-                    <option value="อุ๋ม">อุ๋ม</option>
-                    <option value="อุ๋ม (ด่วน)">อุ๋ม (ด่วน)</option>
-                    <option value="เบล">เบล</option>
-                    <option value="เบล (ด่วน)">เบล (ด่วน)</option>
-                </select>
+    <!-- ===== แท็บสลับ ===== -->
+    <div class="tab-container">
+        <button class="tab-btn active" id="tabJobOrder" onclick="switchTab('jobOrder')">📋 ใบสั่งงาน</button>
+        <button class="tab-btn" id="tabDelivery" onclick="switchTab('delivery')">📦 ใบส่งงาน</button>
+    </div>
+
+    <!-- ===== โหมด 1: ใบสั่งงาน ===== -->
+    <div id="jobOrderMode">
+        <div class="canva-box" id="jobOrderBox">
+            
+            <div class="header-row">
+                <div class="header-cell">เพจ: <input type="text"></div>
+                <div class="header-cell">ชื่อ: 
+                    <select id="salesName" onchange="checkUrgent(this)">
+                        <option value="">- เลือก -</option>
+                        <option value="จุ๋ม">จุ๋ม</option>
+                        <option value="จุ๋ม (ด่วน)">จุ๋ม (ด่วน)</option>
+                        <option value="กรีน">กรีน</option>
+                        <option value="กรีน (ด่วน)">กรีน (ด่วน)</option>
+                        <option value="ส้ม">ส้ม</option>
+                        <option value="ส้ม (ด่วน)">ส้ม (ด่วน)</option>
+                        <option value="เมย์">เมย์</option>
+                        <option value="เมย์ (ด่วน)">เมย์ (ด่วน)</option>
+                        <option value="อุ๋ม">อุ๋ม</option>
+                        <option value="อุ๋ม (ด่วน)">อุ๋ม (ด่วน)</option>
+                        <option value="เบล">เบล</option>
+                        <option value="เบล (ด่วน)">เบล (ด่วน)</option>
+                    </select>
+                </div>
+                <div class="header-cell">No. <input type="text" id="runNoDisplay" placeholder="(อัตโนมัติ)" readonly style="font-size: 14px; color: gray;"></div>
             </div>
-            <div class="header-cell">No. <input type="text" id="runNoDisplay" placeholder="(อัตโนมัติ)" readonly style="font-size: 14px; color: gray;"></div>
+
+            <div class="header-row">
+                <div class="header-cell">
+                    รับงาน: 
+                    <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
+                        <input type="text" id="dispRecvDate" placeholder="วว/ดด/ปปปป" readonly>
+                        <input type="date" id="recvDate" onchange="formatDate(this, 'dispRecvDate')">
+                    </div>
+                </div>
+                <div class="header-cell">
+                    กำหนดส่ง: 
+                    <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
+                        <input type="text" id="dispDueDate" placeholder="วว/ดด/ปปปป" readonly>
+                        <input type="date" id="dueDate" onchange="formatDate(this, 'dispDueDate')">
+                    </div>
+                </div>
+                <div class="header-cell checkbox-group">
+                    <input type="checkbox" id="install"> <label for="install">ติดตั้ง</label>
+                </div>
+            </div>
+
+            <div class="header-row">
+                <div class="header-cell checkbox-group" style="justify-content: space-around;">
+                    <label>💡 <input type="checkbox"></label>
+                    <label>💡❌ <input type="checkbox"></label>
+                </div>
+                <div class="header-cell checkbox-group" style="justify-content: space-around;">
+                    <label>ไฟขาว <input type="checkbox"></label>
+                    <label>ไฟวอร์ม <input type="checkbox"></label>
+                </div>
+                <div class="header-cell checkbox-group">
+                    <input type="checkbox" id="no-install"> <label for="no-install" style="color: red;">ไม่ติดตั้ง</label>
+                </div>
+            </div>
+
+            <div class="canvas-area empty" id="jobOrderCanvasArea">
+                <span class="canvas-placeholder" id="placeholderText">แตะเพื่อแนบรูปภาพ<br>(เลือกได้หลายรูป)</span>
+                <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;">
+                <div id="imageGallery" class="image-gallery"></div>
+            </div>
+
+            <div class="bottom-section">
+                <div class="bottom-left">
+                    <div class="bottom-row">
+                        <span>รายละเอียด:</span> 
+                        <label class="checkbox-group"><input type="checkbox"> งานภายใน</label>
+                        <label class="checkbox-group"><input type="checkbox"> งานภายนอก</label>
+                    </div>
+                    <div class="bottom-row">
+                        <span>ขนาด:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
+                    </div>
+                    <div class="bottom-row">
+                        <span>รหัสสี:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
+                    </div>
+                    <div class="bottom-row">
+                        <span>โครงเหล็ก/สี:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
+                    </div>
+                    <div class="bottom-row">
+                        <span>สายไฟยาว</span> <input type="text" class="inline-input" style="width: 50px; flex: none; text-align: center;"> <span>ม.</span>
+                        <span style="margin-left: auto;">จุดปล่อยไฟ:</span>
+                        <label class="checkbox-group"><input type="checkbox"> ซ้าย</label>
+                        <label class="checkbox-group"><input type="checkbox"> ขวา</label>
+                    </div>                    
+                </div>
+
+                <div class="bottom-right">
+                    <div class="note-label">เพิ่มเติม:</div>
+                    <textarea class="note-textarea" placeholder="พิมพ์รายละเอียดเพิ่มเติมตรงนี้..."></textarea>
+                </div>
+            </div>
         </div>
 
-        <div class="header-row">
-            <div class="header-cell">
-                รับงาน: 
-                <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
-                    <input type="text" id="dispRecvDate" placeholder="วว/ดด/ปปปป" readonly>
-                    <input type="date" id="recvDate" onchange="formatDate(this, 'dispRecvDate')">
-                </div>
-            </div>
-            <div class="header-cell">
-                กำหนดส่ง: 
-                <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
-                    <input type="text" id="dispDueDate" placeholder="วว/ดด/ปปปป" readonly>
-                    <input type="date" id="dueDate" onchange="formatDate(this, 'dispDueDate')">
-                </div>
-            </div>
-            <div class="header-cell checkbox-group">
-                <input type="checkbox" id="install"> <label for="install">ติดตั้ง</label>
-            </div>
-        </div>
-
-        <div class="header-row">
-            <div class="header-cell checkbox-group" style="justify-content: space-around;">
-                <label>💡 <input type="checkbox"></label>
-                <label>💡❌ <input type="checkbox"></label>
-            </div>
-            <div class="header-cell checkbox-group" style="justify-content: space-around;">
-                <label>ไฟขาว <input type="checkbox"></label>
-                <label>ไฟวอร์ม <input type="checkbox"></label>
-            </div>
-            <div class="header-cell checkbox-group">
-                <input type="checkbox" id="no-install"> <label for="no-install" style="color: red;">ไม่ติดตั้ง</label>
-            </div>
-        </div>
-
-        <div class="canvas-area" onclick="document.getElementById('imageUpload').click()">
-            <span class="canvas-placeholder" id="placeholderText">แตะเพื่อแนบรูปภาพ<br>(เลือกได้หลายรูป)</span>
-            <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;">
-            <div id="imageGallery" class="image-gallery"></div>
-        </div>
-
-        <div class="bottom-section">
-            <div class="bottom-left">
-                <div class="bottom-row">
-                    <span>รายละเอียด:</span> 
-                    <label class="checkbox-group"><input type="checkbox"> งานภายใน</label>
-                    <label class="checkbox-group"><input type="checkbox"> งานภายนอก</label>
-                </div>
-                <div class="bottom-row">
-                    <span>ขนาด:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
-                </div>
-                <div class="bottom-row">
-                    <span>รหัสสี:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
-                </div>
-                <div class="bottom-row">
-                    <span>โครงเหล็ก/สี:</span> <input type="text" class="inline-input" style="width: 220px; flex: none;">
-                </div>
-                <div class="bottom-row">
-                    <span>สายไฟยาว</span> <input type="text" class="inline-input" style="width: 50px; flex: none; text-align: center;"> <span>ม.</span>
-                    <span style="margin-left: auto;">จุดปล่อยไฟ:</span>
-                    <label class="checkbox-group"><input type="checkbox"> ซ้าย</label>
-                    <label class="checkbox-group"><input type="checkbox"> ขวา</label>
-                </div>                    
-            </div>
-
-            <div class="bottom-right">
-                <div class="note-label">เพิ่มเติม:</div>
-                <textarea class="note-textarea" placeholder="พิมพ์รายละเอียดเพิ่มเติมตรงนี้..."></textarea>
-            </div>
+        <div style="text-align: center;">
+            <button class="btn-save" onclick="saveJobOrder()">💾 บันทึกใบสั่งงาน</button>
         </div>
     </div>
 
-    <button class="btn-save" onclick="saveAsImageAndUpload()">💾 บันทึกเป็นรูปภาพ</button>
+    <!-- ===== โหมด 2: ใบส่งงาน A4 แนวตั้ง ===== -->
+    <div id="deliveryMode" class="hidden">
+        <div class="delivery-box" id="deliveryBox">
+
+            <div class="delivery-warning">
+                ⚠️ ระวังป้ายแตก ห้ามโยน ห้ามวางทับ ⚠️
+            </div>
+
+            <div class="delivery-sender">
+                <div class="row">
+                    <span class="label">ผู้ส่ง:</span>
+                    <select id="deliverySender">
+                        <option value="">- เลือกร้าน -</option>
+                        <option value="ป้ายสวยเด่น">ป้ายสวยเด่น</option>
+                        <option value="ไอเดียฟอร์ยู">ไอเดียฟอร์ยู</option>
+                        <option value="ฟาร์มไอเดีย">ฟาร์มไอเดีย</option>
+                        <option value="อักษรโลหะ">อักษรโลหะ</option>
+                    </select>
+                </div>
+                <div class="address">
+                    220 ถนนแฮปปี้แลนด์สาย 2 แขวงคลองจั่น เขตบางกะปิ กรุงเทพฯ 10240
+                </div>
+                <div class="sender-phone-row">
+                    <span class="phone-label">📞 โทร.</span>
+                    <input type="tel" id="senderPhone" placeholder="กรอกเบอร์โทรผู้ส่ง (จำเป็น)" inputmode="tel">
+                </div>
+            </div>
+
+            <div class="delivery-canvas-area empty" id="deliveryCanvasArea">
+                <span class="canvas-placeholder" id="deliveryPlaceholderText">แตะเพื่อแนบรูปภาพสินค้า<br>(เลือกได้หลายรูป)</span>
+                <input type="file" id="deliveryImageUpload" accept="image/*" multiple style="display: none;">
+                <div id="deliveryImageGallery" class="image-gallery"></div>
+            </div>
+
+            <div class="delivery-receiver">
+                <div class="label">ผู้รับ:</div>
+                <textarea id="receiverInfo" placeholder="ชื่อผู้รับ:&#10;ที่อยู่:&#10;โทร:" rows="5"></textarea>
+            </div>
+
+        </div>
+
+        <div style="text-align: center;">
+            <button class="btn-save" onclick="saveDeliveryNote()">💾 บันทึกใบส่งงาน</button>
+        </div>
+    </div>
+
+    <!-- ===== Modal ===== -->
+    <div class="result-modal" id="resultModal">
+        <div class="result-modal-title" id="resultModalTitle">✅ บันทึกสำเร็จ!</div>
+        <div class="result-modal-hint">👇 กดค้างที่รูป แล้วเลือก "บันทึกรูปภาพ"</div>
+        <img class="result-modal-img" id="resultModalImg" src="" alt="ใบงาน">
+        <div class="result-modal-buttons">
+            <button class="result-modal-btn primary" onclick="shareAgain()">📤 แชร์/บันทึกอีกครั้ง</button>
+            <button class="result-modal-btn secondary" onclick="closeResultModal()">ปิด / สร้างใบใหม่</button>
+        </div>
+    </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyJ811HReZ_WWg-8nDyM8U7nHFyXG9y8V1TZ-GmifJTscCHSiN5nbTyVBaB_L9F7MdSpQ/exec";
+
+        let lastImageBlob = null;
+        let lastImageFileName = "";
+
+        // ============================================================
+        // ImageManager: จัดการรูปในแต่ละโหมด (เก็บเป็น array → ลบ/เพิ่มได้)
+        // ============================================================
+        class ImageManager {
+            constructor(config) {
+                this.inputId = config.inputId;
+                this.galleryId = config.galleryId;
+                this.placeholderId = config.placeholderId;
+                this.canvasAreaId = config.canvasAreaId;
+                this.images = []; // เก็บ { id, dataUrl }
+                this.nextId = 1;
+                this.init();
+            }
+
+            init() {
+                const input = document.getElementById(this.inputId);
+                const canvasArea = document.getElementById(this.canvasAreaId);
+
+                // คลิกพื้นที่ว่าง → เปิด file picker (เฉพาะตอนยังไม่มีรูป)
+                canvasArea.addEventListener('click', (e) => {
+                    // คลิกเฉพาะตอนยังไม่มีรูป (empty class) และไม่ใช่คลิกที่ปุ่ม
+                    if (this.images.length === 0 && !e.target.closest('.btn-remove') && !e.target.closest('.add-slot')) {
+                        input.click();
+                    }
+                });
+
+                // เมื่อเลือกไฟล์
+                input.addEventListener('change', (e) => {
+                    this.handleFiles(e.target.files);
+                    // reset input value เพื่อให้เลือกไฟล์เดิมซ้ำได้
+                    input.value = '';
+                });
+            }
+
+            handleFiles(files) {
+                if (!files || files.length === 0) return;
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.images.push({
+                            id: this.nextId++,
+                            dataUrl: e.target.result
+                        });
+                        this.render();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            removeImage(id) {
+                this.images = this.images.filter(img => img.id !== id);
+                this.render();
+            }
+
+            addMore() {
+                document.getElementById(this.inputId).click();
+            }
+
+            render() {
+                const gallery = document.getElementById(this.galleryId);
+                const placeholder = document.getElementById(this.placeholderId);
+                const canvasArea = document.getElementById(this.canvasAreaId);
+                gallery.innerHTML = '';
+
+                if (this.images.length === 0) {
+                    placeholder.style.display = '';
+                    canvasArea.classList.add('empty');
+                    gallery.removeAttribute('data-count');
+                    return;
+                }
+
+                placeholder.style.display = 'none';
+                canvasArea.classList.remove('empty');
+
+                // set data-count ตามจำนวนรูปจริง
+                const count = this.images.length;
+                if (count <= 5) {
+                    gallery.setAttribute('data-count', count.toString());
+                } else {
+                    gallery.setAttribute('data-count', 'many');
+                }
+
+                // วาดแต่ละรูป
+                this.images.forEach(img => {
+                    const slot = document.createElement('div');
+                    slot.className = 'img-slot';
+
+                    const box = document.createElement('div');
+                    box.className = 'img-box';
+                    box.style.backgroundImage = `url('${img.dataUrl}')`;
+
+                    const btnRemove = document.createElement('button');
+                    btnRemove.className = 'btn-remove';
+                    btnRemove.innerHTML = '✕';
+                    btnRemove.setAttribute('data-no-capture', 'true');
+                    btnRemove.onclick = (e) => {
+                        e.stopPropagation();
+                        this.removeImage(img.id);
+                    };
+
+                    slot.appendChild(box);
+                    slot.appendChild(btnRemove);
+                    gallery.appendChild(slot);
+                });
+
+                // เพิ่มช่อง "+" ถ้ายังไม่เต็ม (max 8 รูป)
+                if (this.images.length < 8) {
+                    const addSlot = document.createElement('div');
+                    addSlot.className = 'img-slot add-slot';
+                    addSlot.setAttribute('data-no-capture', 'true');
+                    
+                    const content = document.createElement('div');
+                    content.className = 'add-content';
+                    content.innerHTML = '<div style="font-size:50px; line-height:1;">+</div><div class="add-label">เพิ่มรูป</div>';
+                    addSlot.appendChild(content);
+                    
+                    addSlot.onclick = (e) => {
+                        e.stopPropagation();
+                        this.addMore();
+                    };
+                    gallery.appendChild(addSlot);
+                }
+            }
+
+            // คืนจำนวนรูป (ใช้เช็คก่อนบันทึก ถ้าต้องการ)
+            getImageCount() {
+                return this.images.length;
+            }
+        }
+
+        // สร้าง manager สำหรับทั้ง 2 โหมด
+        const jobOrderImages = new ImageManager({
+            inputId: 'imageUpload',
+            galleryId: 'imageGallery',
+            placeholderId: 'placeholderText',
+            canvasAreaId: 'jobOrderCanvasArea'
+        });
+
+        const deliveryImages = new ImageManager({
+            inputId: 'deliveryImageUpload',
+            galleryId: 'deliveryImageGallery',
+            placeholderId: 'deliveryPlaceholderText',
+            canvasAreaId: 'deliveryCanvasArea'
+        });
+
+        // ===== สลับแท็บ =====
+        function switchTab(mode) {
+            if (mode === 'jobOrder') {
+                document.getElementById('jobOrderMode').classList.remove('hidden');
+                document.getElementById('deliveryMode').classList.add('hidden');
+                document.getElementById('tabJobOrder').classList.add('active');
+                document.getElementById('tabDelivery').classList.remove('active');
+            } else {
+                document.getElementById('jobOrderMode').classList.add('hidden');
+                document.getElementById('deliveryMode').classList.remove('hidden');
+                document.getElementById('tabJobOrder').classList.remove('active');
+                document.getElementById('tabDelivery').classList.add('active');
+            }
+        }
 
         function checkUrgent(selectElement) {
             if (selectElement.value.includes('(ด่วน)')) {
@@ -163,86 +681,96 @@
             }
         }
 
-        document.getElementById('imageUpload').addEventListener('change', function(event) {
-            const files = event.target.files;
-            const gallery = document.getElementById('imageGallery');
-            const placeholder = document.getElementById('placeholderText');
+        // ============================================================
+        // ฟังก์ชันแคปรูป (ซ่อนปุ่ม ❌ และปุ่ม + ก่อนแคป)
+        // ============================================================
+        function captureElement(elementId, boxWidth, boxHeight) {
+            const element = document.getElementById(elementId);
+            return html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                windowWidth: boxWidth,
+                onclone: function (clonedDoc) {
+                    const clonedBox = clonedDoc.getElementById(elementId);
+                    clonedBox.style.width = boxWidth + 'px';
+                    clonedBox.style.height = boxHeight + 'px';
+                    clonedBox.style.margin = '0';
 
-            if (files.length > 0) {
-                placeholder.style.display = 'none'; 
-                gallery.innerHTML = ''; 
+                    // ซ่อน placeholder
+                    const placeholders = clonedDoc.querySelectorAll('.canvas-placeholder');
+                    placeholders.forEach(p => p.style.display = 'none');
 
-                if (files.length === 1) { gallery.setAttribute('data-count', '1'); } 
-                else if (files.length === 2) { gallery.setAttribute('data-count', '2'); } 
-                else if (files.length <= 4) { gallery.setAttribute('data-count', '3'); } 
-                else { gallery.setAttribute('data-count', 'many'); }
+                    // ซ่อนปุ่มลบ + ปุ่มเพิ่ม (ทุกตัวที่มี data-no-capture)
+                    const noCaptureEls = clonedDoc.querySelectorAll('[data-no-capture="true"]');
+                    noCaptureEls.forEach(el => el.remove());
 
-                Array.from(files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const div = document.createElement('div');
-                        div.className = 'img-box';
-                        div.style.backgroundImage = `url('${e.target.result}')`;
-                        gallery.appendChild(div);
-                    }
-                    reader.readAsDataURL(file);
-                });
-            }
-        });
+                    // ถ้าลบ add-slot ไปแล้ว ต้อง re-layout grid ตามจำนวนรูปจริง
+                    // คำนวณ data-count ใหม่ให้ตรงกับรูปที่เหลือ (ไม่นับปุ่ม +)
+                    const galleries = clonedDoc.querySelectorAll('.image-gallery');
+                    galleries.forEach(gallery => {
+                        const realSlots = gallery.querySelectorAll('.img-slot').length;
+                        if (realSlots === 0) {
+                            gallery.removeAttribute('data-count');
+                        } else if (realSlots === 1) {
+                            gallery.style.gridTemplateColumns = '1fr';
+                            gallery.style.gridTemplateRows = '1fr';
+                        } else if (realSlots === 2) {
+                            gallery.style.gridTemplateColumns = '1fr 1fr';
+                            gallery.style.gridTemplateRows = '1fr';
+                        } else if (realSlots === 3) {
+                            gallery.style.gridTemplateColumns = '1fr 1fr';
+                            gallery.style.gridTemplateRows = '1fr 1fr';
+                            // รูปที่ 3 ขยายเต็มแถวล่าง
+                            const thirdSlot = gallery.querySelectorAll('.img-slot')[2];
+                            if (thirdSlot) thirdSlot.style.gridColumn = '1 / span 2';
+                        } else if (realSlots === 4) {
+                            gallery.style.gridTemplateColumns = '1fr 1fr';
+                            gallery.style.gridTemplateRows = '1fr 1fr';
+                        } else if (realSlots <= 6) {
+                            gallery.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                            gallery.style.gridTemplateRows = 'repeat(2, 1fr)';
+                        } else {
+                            gallery.style.gridTemplateColumns = 'repeat(4, 1fr)';
+                            gallery.style.gridTemplateRows = 'repeat(2, 1fr)';
+                        }
+                    });
+
+                    // แปลง textarea เป็น div เพื่อให้ขึ้นบรรทัดใหม่ถูกต้อง
+                    const textareas = clonedDoc.querySelectorAll('textarea');
+                    textareas.forEach(textarea => {
+                        const div = clonedDoc.createElement('div');
+                        div.innerHTML = (textarea.value || '').replace(/\n/g, '<br>');
+                        
+                        const computed = window.getComputedStyle(textarea);
+                        div.style.width = '100%';
+                        div.style.height = textarea.offsetHeight + 'px';
+                        div.style.padding = computed.padding;
+                        div.style.fontFamily = computed.fontFamily;
+                        div.style.fontSize = computed.fontSize;
+                        div.style.lineHeight = computed.lineHeight;
+                        div.style.border = computed.border;
+                        div.style.borderRadius = computed.borderRadius;
+                        div.style.boxSizing = 'border-box';
+                        div.style.wordWrap = 'break-word';
+                        div.style.whiteSpace = 'pre-wrap';
+                        textarea.parentNode.replaceChild(div, textarea);
+                    });
+                }
+            }).then(canvas => canvas.toDataURL('image/png'));
+        }
 
         // ============================================================
-        // ฟังก์ชันใหม่: ใช้ 2 ขั้นตอน (ขอเลขก่อน → แคปรูปพร้อมเลข → ส่งเซฟ)
+        // บันทึก "ใบสั่งงาน"
         // ============================================================
-        function saveAsImageAndUpload() {
-            const element = document.getElementById('jobOrderBox');
-            const placeholder = document.getElementById('placeholderText');
-            const btnSave = document.querySelector('.btn-save');
+        function saveJobOrder() {
+            const btnSave = document.querySelector('#jobOrderMode .btn-save');
             const runNoInput = document.getElementById('runNoDisplay');
             const salesName = document.getElementById('salesName').value || 'Unknown';
 
-            const originalDisplay = placeholder.style.display;
             const originalBtnText = btnSave.innerHTML;
-
-            placeholder.style.display = 'none';
             btnSave.disabled = true;
 
-            // ฟังก์ชันแคปรูป (เลขจะถูกกรอกในหน้าเว็บก่อนเรียกแล้ว)
-            const takeSnapshot = () => {
-                return html2canvas(element, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: "#ffffff",
-                    windowWidth: 800,
-                    onclone: function (clonedDoc) {
-                        const clonedBox = clonedDoc.getElementById('jobOrderBox');
-                        clonedBox.style.width = '800px';
-                        clonedBox.style.height = '800px';
-                        clonedBox.style.margin = '0';
-
-                        const clonedPlaceholderText = clonedDoc.getElementById('placeholderText');
-                        if (clonedPlaceholderText) clonedPlaceholderText.style.display = 'none';
-
-                        // แปลง textarea เป็น div เพื่อให้ขึ้นบรรทัดใหม่ถูกต้องในรูป
-                        const textareas = clonedDoc.querySelectorAll('.note-textarea');
-                        textareas.forEach(textarea => {
-                            const div = clonedDoc.createElement('div');
-                            div.innerHTML = textarea.value.replace(/\n/g, '<br>');
-                            div.style.width = '100%';
-                            div.style.height = '100%';
-                            div.style.border = '1px dashed #ccc';
-                            div.style.borderRadius = '4px';
-                            div.style.padding = '10px';
-                            div.style.boxSizing = 'border-box';
-                            div.style.fontFamily = "'Sarabun', sans-serif";
-                            div.style.fontSize = '16px';
-                            div.style.wordWrap = 'break-word';
-                            textarea.parentNode.replaceChild(div, textarea);
-                        });
-                    }
-                }).then(canvas => canvas.toDataURL('image/png'));
-            };
-
-            // ====== ขั้นตอนที่ 1: ขอเลข Run No. จากหลังบ้านก่อน ======
             btnSave.innerHTML = "⏳ กำลังขอเลขใบงาน...";
 
             fetch(API_URL, {
@@ -258,11 +786,9 @@
                 if (data.status !== "success") {
                     throw new Error("ขอเลขไม่สำเร็จ: " + (data.message || "ไม่ทราบสาเหตุ"));
                 }
-
                 const runNo = data.runNo;
                 const rowIndex = data.rowIndex;
 
-                // ====== ขั้นตอนที่ 2: ฝังเลขในหน้าเว็บ + แคปรูป ======
                 runNoInput.value = runNo;
                 runNoInput.style.color = "black";
                 runNoInput.style.fontWeight = "bold";
@@ -270,10 +796,8 @@
 
                 btnSave.innerHTML = "📸 กำลังสร้างรูปใบงาน...";
 
-                return takeSnapshot().then(imgData => {
-                    // ====== ขั้นตอนที่ 3: ส่งรูปไปเซฟใน Drive + อัปเดต Sheet ======
+                return captureElement('jobOrderBox', 800, 800).then(imgData => {
                     btnSave.innerHTML = "☁️ กำลังอัปโหลดรูป...";
-
                     const now = new Date();
                     const d = String(now.getDate()).padStart(2, '0');
                     const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -297,15 +821,9 @@
                         if (saveData.status !== "success") {
                             throw new Error("บันทึกรูปไม่สำเร็จ: " + (saveData.message || "ไม่ทราบสาเหตุ"));
                         }
-
-                        // ====== ขั้นตอนที่ 4: ดาวน์โหลดรูปลงเครื่อง ======
-                        const link = document.createElement('a');
-                        link.download = `JobOrder_${runNo.replace('/', '-')}_${salesName}.png`;
-                        link.href = imgData;
-                        link.click();
-
-                        alert("✅ บันทึกสำเร็จ!\nหมายเลข Run No. ของคุณคือ: " + runNo);
-                        window.location.reload();
+                        btnSave.innerHTML = "💾 กำลังเตรียมรูป...";
+                        const downloadFileName = `JobOrder_${runNo.replace('/', '-')}_${salesName}.png`;
+                        return deliverImageToUser(imgData, downloadFileName, `ใบสั่งงาน ${runNo}`);
                     });
                 });
             })
@@ -313,10 +831,137 @@
                 alert("❌ เกิดข้อผิดพลาด: " + error.message + "\n\nกรุณาลองใหม่อีกครั้ง");
                 btnSave.innerHTML = originalBtnText;
                 btnSave.disabled = false;
-                if (document.getElementById('imageGallery').childNodes.length === 0) {
-                    placeholder.style.display = originalDisplay;
-                }
             });
+        }
+
+        // ============================================================
+        // บันทึก "ใบส่งงาน" (เซฟเข้า Sheet + Drive → แล้ว share/save)
+        // ============================================================
+        function saveDeliveryNote() {
+            const btnSave = document.querySelector('#deliveryMode .btn-save');
+            const sender = document.getElementById('deliverySender').value;
+            const phoneInput = document.getElementById('senderPhone');
+            const phone = phoneInput.value.trim();
+            const receiverInfo = document.getElementById('receiverInfo').value.trim();
+
+            if (!sender) {
+                alert("⚠️ กรุณาเลือกร้านผู้ส่งก่อนนะ");
+                return;
+            }
+
+            // เช็คเบอร์โทรผู้ส่ง (บังคับกรอก + ต้องมีตัวเลขอย่างน้อย 9 หลัก)
+            const digitsOnly = phone.replace(/\D/g, '');
+            if (!phone || digitsOnly.length < 9) {
+                phoneInput.classList.add('error');
+                phoneInput.focus();
+                alert("⚠️ กรุณากรอกเบอร์โทรผู้ส่งให้ครบนะ (อย่างน้อย 9 หลัก)");
+                return;
+            }
+            phoneInput.classList.remove('error');
+
+            const originalBtnText = btnSave.innerHTML;
+            btnSave.disabled = true;
+            btnSave.innerHTML = "📸 กำลังสร้างรูปใบส่งงาน...";
+
+            captureElement('deliveryBox', 800, 1131)
+                .then(imgData => {
+                    btnSave.innerHTML = "☁️ กำลังอัปโหลดรูป...";
+
+                    const now = new Date();
+                    const d = String(now.getDate()).padStart(2, '0');
+                    const m = String(now.getMonth() + 1).padStart(2, '0');
+                    const y = now.getFullYear();
+                    const timeStamp = now.getTime();
+                    const fileName = `Delivery_${sender}_${y}${m}${d}_${timeStamp}`;
+
+                    // ส่งขึ้น Sheet + Drive
+                    return fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "saveDelivery",
+                            base64: imgData.split(',')[1],
+                            fileName: fileName,
+                            sender: sender,
+                            senderPhone: phone,
+                            receiverInfo: receiverInfo
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(saveData => {
+                        if (saveData.status !== "success") {
+                            throw new Error("บันทึกไม่สำเร็จ: " + (saveData.message || "ไม่ทราบสาเหตุ"));
+                        }
+                        btnSave.innerHTML = "💾 กำลังเตรียมรูป...";
+                        return deliverImageToUser(imgData, fileName + ".png", `ใบส่งงาน - ${sender}`);
+                    });
+                })
+                .catch(error => {
+                    alert("❌ เกิดข้อผิดพลาด: " + error.message + "\n\nกรุณาลองใหม่อีกครั้ง");
+                })
+                .finally(() => {
+                    btnSave.innerHTML = originalBtnText;
+                    btnSave.disabled = false;
+                });
+        }
+
+        // ============================================================
+        // ส่งรูปให้ user (Web Share API + Modal fallback)
+        // ============================================================
+        async function deliverImageToUser(imgDataUrl, fileName, title) {
+            const blob = dataURLtoBlob(imgDataUrl);
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            lastImageBlob = blob;
+            lastImageFileName = fileName;
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: title });
+                    showResultModal(imgDataUrl, title);
+                    return;
+                } catch (err) {
+                    console.log("Share cancelled or failed:", err);
+                }
+            }
+            showResultModal(imgDataUrl, title);
+        }
+
+        function showResultModal(imgDataUrl, title) {
+            document.getElementById('resultModalImg').src = imgDataUrl;
+            document.getElementById('resultModalTitle').textContent = `✅ ${title}`;
+            document.getElementById('resultModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        async function shareAgain() {
+            if (!lastImageBlob) return;
+            const file = new File([lastImageBlob], lastImageFileName, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: lastImageFileName });
+                } catch (err) {
+                    console.log("Share cancelled:", err);
+                }
+            } else {
+                alert("เครื่องนี้ไม่รองรับการแชร์ตรง\nกรุณากดค้างที่รูปด้านบน แล้วเลือก 'บันทึกรูปภาพ'");
+            }
+        }
+
+        function closeResultModal() {
+            document.body.style.overflow = '';
+            window.location.reload();
+        }
+
+        function dataURLtoBlob(dataUrl) {
+            const arr = dataUrl.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) { u8arr[n] = bstr.charCodeAt(n); }
+            return new Blob([u8arr], { type: mime });
         }
         
         function formatDate(input, dispId) {
@@ -335,6 +980,14 @@
             if(recvDateInput) {
                 recvDateInput.value = `${yyyy}-${mm}-${dd}`;
                 formatDate(recvDateInput, 'dispRecvDate');
+            }
+
+            // เคลียร์สี error ของช่องเบอร์โทรตอน user เริ่มพิมพ์
+            const phoneInput = document.getElementById('senderPhone');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function() {
+                    this.classList.remove('error');
+                });
             }
         };
     </script>
