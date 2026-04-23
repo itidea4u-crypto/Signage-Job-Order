@@ -198,6 +198,41 @@
             line-height: 1.1;
             white-space: nowrap;
         }
+        .delivery-size-row {
+            background-color: #fef3c7;
+            border-bottom: 3px solid #000;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .delivery-size-row .size-label {
+            font-size: 28px;
+            font-weight: 700;
+            color: #000;
+            white-space: nowrap;
+        }
+        .delivery-size-row input {
+            flex: 1;
+            border: none;
+            border-bottom: 3px solid #000;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            padding: 4px 8px;
+            background: transparent;
+            -webkit-appearance: none;
+            border-radius: 0;
+            color: #dc2626;
+        }
+        .delivery-size-row input:focus {
+            border-bottom: 4px solid #059669;
+        }
+        .delivery-size-row input.error {
+            background-color: #fee2e2;
+            border-bottom: 4px solid #dc2626;
+        }
         .delivery-sender {
             padding: 18px 25px;
             border-bottom: 2px solid #000;
@@ -455,6 +490,11 @@
 
             <div class="delivery-warning">
                 ⚠️ ระวังป้ายแตก ห้ามโยน ห้ามวางทับ ⚠️
+            </div>
+
+            <div class="delivery-size-row">
+                <span class="size-label">📏 ขนาดป้าย:</span>
+                <input type="text" id="deliverySize" placeholder="เช่น 200x100 cm" autocomplete="off">
             </div>
 
             <div class="delivery-sender">
@@ -875,12 +915,23 @@
             const sender = document.getElementById('deliverySender').value;
             const phoneInput = document.getElementById('senderPhone');
             const phone = phoneInput.value.trim();
+            const sizeInput = document.getElementById('deliverySize');
+            const size = sizeInput.value.trim();
             const receiverInfo = document.getElementById('receiverInfo').value.trim();
 
             if (!sender) {
                 alert("⚠️ กรุณาเลือกร้านผู้ส่งก่อนนะ");
                 return;
             }
+
+            // เช็คขนาดป้าย (บังคับกรอก - ฝ่ายส่งของต้องใช้เรียกรถ)
+            if (!size) {
+                sizeInput.classList.add('error');
+                sizeInput.focus();
+                alert("⚠️ กรุณากรอกขนาดป้ายก่อนนะ (สำคัญสำหรับเรียกรถส่งของ)");
+                return;
+            }
+            sizeInput.classList.remove('error');
 
             // เช็คเบอร์โทรผู้ส่ง (บังคับกรอก + ต้องมีตัวเลขอย่างน้อย 9 หลัก)
             const digitsOnly = phone.replace(/\D/g, '');
@@ -917,6 +968,7 @@
                             fileName: fileName,
                             sender: sender,
                             senderPhone: phone,
+                            size: size,
                             receiverInfo: receiverInfo
                         })
                     })
@@ -1019,6 +1071,14 @@
             const phoneInput = document.getElementById('senderPhone');
             if (phoneInput) {
                 phoneInput.addEventListener('input', function() {
+                    this.classList.remove('error');
+                });
+            }
+
+            // เคลียร์สี error ของช่องขนาดป้ายตอน user เริ่มพิมพ์
+            const sizeInput = document.getElementById('deliverySize');
+            if (sizeInput) {
+                sizeInput.addEventListener('input', function() {
                     this.classList.remove('error');
                 });
             }
