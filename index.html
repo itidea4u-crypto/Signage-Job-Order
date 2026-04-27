@@ -368,6 +368,159 @@
         .result-modal-btn.secondary { background-color: #6b7280; color: white; }
 
         .hidden { display: none !important; }
+
+        /* ===== Error highlight ===== */
+        .error-field {
+            background-color: #fee2e2 !important;
+            border: 2px solid #dc2626 !important;
+            border-radius: 4px !important;
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* ===== ใบคิวกราฟิก ===== */
+        .graphic-box {
+            width: 800px;
+            background-color: white;
+            border: 3px solid #000;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            position: relative;
+            margin: 0 auto;
+        }
+        .graphic-header {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.2fr;
+            border-bottom: 2px solid #000;
+        }
+        .graphic-cell {
+            border-right: 2px solid #000;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 600;
+            min-height: 40px;
+        }
+        .graphic-cell:last-child { border-right: none; }
+        .graphic-cell input[type="text"],
+        .graphic-cell select {
+            border: none;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 20px;
+            flex: 1;
+            width: 100%;
+            margin-left: 5px;
+            background: transparent;
+            -webkit-appearance: none;
+            border-radius: 0;
+            color: black;
+        }
+        .graphic-section {
+            padding: 12px 20px;
+            border-bottom: 2px solid #000;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .graphic-section .section-label {
+            margin-bottom: 8px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .graphic-worktype-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px 10px;
+        }
+        .graphic-worktype-grid label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 17px;
+        }
+        .graphic-worktype-grid input[type="checkbox"] { transform: scale(1.3); margin: 0 3px; cursor: pointer; }
+        .graphic-worktype-other {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            grid-column: 1 / span 3;
+            margin-top: 2px;
+        }
+        .graphic-worktype-other input[type="text"] {
+            flex: 1;
+            border: none;
+            border-bottom: 1px solid #000;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 17px;
+            padding: 2px 5px;
+            background: transparent;
+            -webkit-appearance: none;
+            border-radius: 0;
+        }
+        .graphic-size-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .graphic-size-row input {
+            flex: 1;
+            border: none;
+            border-bottom: 2px solid #000;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 20px;
+            padding: 4px 8px;
+            background: transparent;
+            -webkit-appearance: none;
+            border-radius: 0;
+        }
+        .graphic-canvas-area {
+            position: relative;
+            background-color: #fafafa;
+            min-height: 450px;
+            border-bottom: 2px solid #000;
+            overflow: hidden;
+        }
+        .graphic-canvas-area.empty { cursor: pointer; }
+        .graphic-detail-section {
+            padding: 12px 20px;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .graphic-detail-section textarea {
+            flex: 1;
+            width: 100%;
+            min-height: 110px;
+            resize: none;
+            border: 1px dashed #999;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 18px;
+            box-sizing: border-box;
+            outline: none;
+            background: transparent;
+            -webkit-appearance: none;
+            line-height: 1.4;
+        }
+        .graphic-detail-section textarea:focus { border: 1px solid #000; }
+        .graphic-select.urgent {
+            background-color: #ef4444 !important;
+            color: black !important;
+            border-radius: 4px;
+            padding: 2px 5px;
+        }
     </style>
 </head>
 <body>
@@ -376,6 +529,8 @@
     <div class="tab-container">
         <button class="tab-btn active" id="tabJobOrder" onclick="switchTab('jobOrder')">📋 ใบสั่งงาน</button>
         <button class="tab-btn" id="tabDelivery" onclick="switchTab('delivery')">📦 ใบส่งของ</button>
+        <!-- ซ่อนชั่วคราว: ยังไม่ใช้ -->
+        <button class="tab-btn hidden" id="tabGraphic" onclick="switchTab('graphic')">🎨 ใบคิวกราฟิก</button>
     </div>
 
     <!-- ===== โหมด 1: ใบสั่งงาน ===== -->
@@ -383,7 +538,16 @@
         <div class="canva-box" id="jobOrderBox">
             
             <div class="header-row">
-                <div class="header-cell">เพจ: <input type="text"></div>
+                <div class="header-cell">เพจ: 
+                    <select id="jobOrderPage">
+                        <option value="">- เลือก -</option>
+                        <option value="ป้ายสวยเด่น">ป้ายสวยเด่น</option>
+                        <option value="ไอเดียฟอร์ยู">ไอเดียฟอร์ยู</option>
+                        <option value="ฟาร์มไอเดีย">ฟาร์มไอเดีย</option>
+                        <option value="อักษรโลหะ">อักษรโลหะ</option>
+                        <option value="ฟาร์ม/คุ้มคง">ฟาร์ม/คุ้มคง</option>
+                    </select>
+                </div>
                 <div class="header-cell">ชื่อ: 
                     <select id="salesName" onchange="checkUrgent(this)">
                         <option value="">- เลือก -</option>
@@ -420,21 +584,21 @@
                     </div>
                 </div>
                 <div class="header-cell checkbox-group">
-                    <input type="checkbox" id="install"> <label for="install">ติดตั้ง</label>
+                    <input type="checkbox" id="install" data-group="install"> <label for="install">ติดตั้ง</label>
                 </div>
             </div>
 
             <div class="header-row">
                 <div class="header-cell checkbox-group" style="justify-content: space-around;">
-                    <label>💡 <input type="checkbox"></label>
-                    <label>💡❌ <input type="checkbox"></label>
+                    <label>💡 <input type="checkbox" data-group="lightOnOff"></label>
+                    <label>💡❌ <input type="checkbox" data-group="lightOnOff"></label>
                 </div>
                 <div class="header-cell checkbox-group" style="justify-content: space-around;">
-                    <label>ไฟขาว <input type="checkbox"></label>
-                    <label>ไฟวอร์ม <input type="checkbox"></label>
+                    <label>ไฟขาว <input type="checkbox" data-group="lightColor"></label>
+                    <label>ไฟวอร์ม <input type="checkbox" data-group="lightColor"></label>
                 </div>
                 <div class="header-cell checkbox-group">
-                    <input type="checkbox" id="no-install"> <label for="no-install" style="color: red;">ไม่ติดตั้ง</label>
+                    <input type="checkbox" id="no-install" data-group="install"> <label for="no-install" style="color: red;">ไม่ติดตั้ง</label>
                 </div>
             </div>
 
@@ -459,6 +623,9 @@
                     </div>
                     <div class="bottom-row" style="gap: 4px;">
                         <label class="checkbox-group" style="gap: 4px;"><input type="checkbox"> โครงเหล็ก</label>
+                        <span>สี:</span> <input type="text" class="inline-input" style="flex: 1; min-width: 40px;">
+                    </div>
+                    <div class="bottom-row" style="gap: 4px;">
                         <label class="checkbox-group" style="gap: 4px;"><input type="checkbox"> ขอบซิงค์</label>
                         <span>สี:</span> <input type="text" class="inline-input" style="flex: 1; min-width: 40px;">
                     </div>
@@ -480,7 +647,9 @@
         </div>
 
         <div style="text-align: center;">
+            <div id="autoSaveStatus" style="font-size: 13px; color: #6b7280; margin: 8px 0; min-height: 18px;"></div>
             <button class="btn-save" onclick="saveJobOrder()">💾 บันทึกใบสั่งงาน</button>
+            <button class="btn-clear" onclick="clearJobOrderForm()" style="margin-left: 10px; padding: 15px 25px; background-color: #6b7280; color: white; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif;">🗑️ ล้างฟอร์ม</button>
         </div>
     </div>
 
@@ -532,6 +701,101 @@
 
         <div style="text-align: center;">
             <button class="btn-save" onclick="saveDeliveryNote()">💾 บันทึกใบส่งของ</button>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- ===== โหมด 3: ใบคิวกราฟิก =========================== -->
+    <!-- ===================================================== -->
+    <div id="graphicMode" class="hidden">
+        <div class="graphic-box" id="graphicBox">
+
+            <!-- Header: เพจ, เซล, Run No. -->
+            <div class="graphic-header">
+                <div class="graphic-cell">เพจ: <input type="text" id="graphicPage"></div>
+                <div class="graphic-cell">ชื่อ: 
+                    <select id="graphicSalesName" class="graphic-select" onchange="checkGraphicUrgent(this)">
+                        <option value="">- เลือก -</option>
+                        <option value="จุ๋ม">จุ๋ม</option>
+                        <option value="จุ๋ม (ด่วน)">จุ๋ม (ด่วน)</option>
+                        <option value="กรีน">กรีน</option>
+                        <option value="กรีน (ด่วน)">กรีน (ด่วน)</option>
+                        <option value="ส้ม">ส้ม</option>
+                        <option value="ส้ม (ด่วน)">ส้ม (ด่วน)</option>
+                        <option value="เมย์">เมย์</option>
+                        <option value="เมย์ (ด่วน)">เมย์ (ด่วน)</option>
+                        <option value="อุ๋ม">อุ๋ม</option>
+                        <option value="อุ๋ม (ด่วน)">อุ๋ม (ด่วน)</option>
+                        <option value="เบล">เบล</option>
+                        <option value="เบล (ด่วน)">เบล (ด่วน)</option>
+                    </select>
+                </div>
+                <div class="graphic-cell">No. <input type="text" id="graphicRunNoDisplay" placeholder="(อัตโนมัติ)" readonly style="font-size: 14px; color: gray;"></div>
+            </div>
+
+            <!-- Row 2: วันที่, กราฟิกรับ -->
+            <div class="graphic-header" style="grid-template-columns: 1fr 1fr;">
+                <div class="graphic-cell">
+                    วันที่: 
+                    <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
+                        <input type="text" id="dispGraphicDate" placeholder="วว/ดด/ปปปป" readonly>
+                        <input type="date" id="graphicDate" onchange="formatDate(this, 'dispGraphicDate')">
+                    </div>
+                </div>
+                <div class="graphic-cell" style="border-right: none;">
+                    กราฟิกรับ:
+                    <select id="graphicReceiver">
+                        <option value="">- เลือก -</option>
+                        <option value="ภรีม">ภรีม</option>
+                        <option value="แป้ง">แป้ง</option>
+                        <option value="จิ๊บ">จิ๊บ</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ชนิดงาน -->
+            <div class="graphic-section">
+                <div class="section-label">ชนิดของงาน:</div>
+                <div class="graphic-worktype-grid">
+                    <label><input type="checkbox" data-worktype="กล่องไฟ"> งานกล่องไฟ</label>
+                    <label><input type="checkbox" data-worktype="ไดคัท"> งานไดคัท</label>
+                    <label><input type="checkbox" data-worktype="ตัวอักษร"> งานตัวอักษร</label>
+                    <label><input type="checkbox" data-worktype="ไฟปิงปอง"> งานไฟปิงปอง</label>
+                    <label><input type="checkbox" data-worktype="infinity"> งาน infinity</label>
+                    <label><input type="checkbox" data-worktype="ไร้คิ้ว"> งานไร้คิ้ว</label>
+                    <label><input type="checkbox" data-worktype="พื้นไม้"> งานพื้นไม้</label>
+                    <label class="graphic-worktype-other" style="grid-column: 2 / span 2;">
+                        <input type="checkbox" id="graphicWorktypeOtherCheck" data-worktype="อื่นๆ"> อื่นๆ:
+                        <input type="text" id="graphicWorktypeOther" placeholder="ระบุ...">
+                    </label>
+                </div>
+            </div>
+
+            <!-- ขนาด -->
+            <div class="graphic-section">
+                <div class="graphic-size-row">
+                    <span style="white-space: nowrap;">📐 ขนาด:</span>
+                    <input type="text" id="graphicSize" placeholder="เช่น 200x100 cm, ทรงกลม 80cm 2 หน้า">
+                </div>
+            </div>
+
+            <!-- พื้นที่แนบรูป -->
+            <div class="graphic-canvas-area empty" id="graphicCanvasArea">
+                <span class="canvas-placeholder" id="graphicPlaceholderText">📷 แตะเพื่อแนบรูปแบบ<br>(เลือกได้หลายรูป - ลูกค้าต้นแบบ/ตัวอย่าง)</span>
+                <input type="file" id="graphicImageUpload" accept="image/*" multiple style="display: none;">
+                <div id="graphicImageGallery" class="image-gallery"></div>
+            </div>
+
+            <!-- รายละเอียดงาน -->
+            <div class="graphic-detail-section">
+                <div style="font-weight: 700; font-size: 18px;">📝 รายละเอียดงาน:</div>
+                <textarea id="graphicDetails" placeholder="พิมพ์คำอธิบายของงาน เช่น สี, ฟอนต์, แนวทางที่ต้องการ, ข้อมูลบนป้าย..."></textarea>
+            </div>
+
+        </div>
+
+        <div style="text-align: center;">
+            <button class="btn-save" onclick="saveGraphicQueue()">💾 บันทึกใบคิวกราฟิก</button>
         </div>
     </div>
 
@@ -697,18 +961,41 @@
             canvasAreaId: 'deliveryCanvasArea'
         });
 
+        const graphicImages = new ImageManager({
+            inputId: 'graphicImageUpload',
+            galleryId: 'graphicImageGallery',
+            placeholderId: 'graphicPlaceholderText',
+            canvasAreaId: 'graphicCanvasArea'
+        });
+
         // ===== สลับแท็บ =====
         function switchTab(mode) {
+            // ซ่อนทุกโหมดก่อน
+            document.getElementById('jobOrderMode').classList.add('hidden');
+            document.getElementById('deliveryMode').classList.add('hidden');
+            document.getElementById('graphicMode').classList.add('hidden');
+            document.getElementById('tabJobOrder').classList.remove('active');
+            document.getElementById('tabDelivery').classList.remove('active');
+            document.getElementById('tabGraphic').classList.remove('active');
+
+            // แสดงโหมดที่เลือก
             if (mode === 'jobOrder') {
                 document.getElementById('jobOrderMode').classList.remove('hidden');
-                document.getElementById('deliveryMode').classList.add('hidden');
                 document.getElementById('tabJobOrder').classList.add('active');
-                document.getElementById('tabDelivery').classList.remove('active');
-            } else {
-                document.getElementById('jobOrderMode').classList.add('hidden');
+            } else if (mode === 'delivery') {
                 document.getElementById('deliveryMode').classList.remove('hidden');
-                document.getElementById('tabJobOrder').classList.remove('active');
                 document.getElementById('tabDelivery').classList.add('active');
+            } else if (mode === 'graphic') {
+                document.getElementById('graphicMode').classList.remove('hidden');
+                document.getElementById('tabGraphic').classList.add('active');
+            }
+        }
+
+        function checkGraphicUrgent(selectElement) {
+            if (selectElement.value.includes('(ด่วน)')) {
+                selectElement.classList.add('urgent');
+            } else {
+                selectElement.classList.remove('urgent');
             }
         }
 
@@ -724,6 +1011,192 @@
                 selectElement.style.padding = '0';
             }
         }
+
+        // ===== Mutually exclusive checkbox =====
+        // checkbox ที่มี data-group เดียวกัน → เลือกได้แค่ตัวเดียว
+        document.addEventListener('change', function(e) {
+            if (e.target.type !== 'checkbox') return;
+            const group = e.target.getAttribute('data-group');
+            if (!group) return;
+            if (!e.target.checked) return;
+
+            // ถ้าติ๊กตัวนี้ → uncheck ตัวอื่นในกลุ่มเดียวกัน
+            const allInGroup = document.querySelectorAll('input[type="checkbox"][data-group="' + group + '"]');
+            allInGroup.forEach(cb => {
+                if (cb !== e.target) {
+                    cb.checked = false;
+                }
+            });
+        });
+
+        // ============================================================
+        // Auto-save ใบสั่งงาน (เซฟใน localStorage 24 ชม.)
+        // ============================================================
+        const AUTOSAVE_KEY = 'jobOrder_autosave';
+        const AUTOSAVE_TTL = 24 * 60 * 60 * 1000; // 24 ชั่วโมงเป็น ms
+
+        function getJobOrderFormData() {
+            const data = {
+                page: document.getElementById('jobOrderPage').value,
+                salesName: document.getElementById('salesName').value,
+                recvDate: document.getElementById('recvDate').value,
+                dueDate: document.getElementById('dueDate').value,
+                inputs: [],
+                checkboxes: [],
+                textareas: []
+            };
+            // เก็บ input text ทั้งหมดใน jobOrderBox
+            document.querySelectorAll('#jobOrderBox input[type="text"]').forEach((el, i) => {
+                if (el.id !== 'runNoDisplay') { // ข้าม runNo (auto)
+                    data.inputs.push({ index: i, value: el.value });
+                }
+            });
+            // เก็บสถานะ checkbox
+            document.querySelectorAll('#jobOrderBox input[type="checkbox"]').forEach((el, i) => {
+                data.checkboxes.push({ index: i, checked: el.checked });
+            });
+            // เก็บ textarea
+            document.querySelectorAll('#jobOrderBox textarea').forEach((el, i) => {
+                data.textareas.push({ index: i, value: el.value });
+            });
+            return data;
+        }
+
+        function saveJobOrderForm() {
+            try {
+                const payload = {
+                    timestamp: Date.now(),
+                    data: getJobOrderFormData()
+                };
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
+                showAutoSaveStatus("💾 บันทึกร่างอัตโนมัติแล้ว");
+            } catch (e) {
+                console.error('Auto-save error:', e);
+            }
+        }
+
+        function loadJobOrderForm() {
+            try {
+                const raw = localStorage.getItem(AUTOSAVE_KEY);
+                if (!raw) return;
+                const payload = JSON.parse(raw);
+                
+                // เช็ค TTL: ถ้าเกิน 24 ชม. → ลบทิ้ง
+                if (Date.now() - payload.timestamp > AUTOSAVE_TTL) {
+                    localStorage.removeItem(AUTOSAVE_KEY);
+                    return;
+                }
+                
+                const data = payload.data;
+                if (!data) return;
+
+                // คืนค่าเพจ
+                if (data.page) document.getElementById('jobOrderPage').value = data.page;
+                // คืนค่าชื่อเซล
+                if (data.salesName) {
+                    const salesEl = document.getElementById('salesName');
+                    salesEl.value = data.salesName;
+                    checkUrgent(salesEl);
+                }
+                // คืนค่าวันที่ส่ง (วันที่รับงานจะ overwrite ด้วยวันนี้ในภายหลัง ไม่ต้องคืน)
+                if (data.dueDate) {
+                    const dueEl = document.getElementById('dueDate');
+                    dueEl.value = data.dueDate;
+                    formatDate(dueEl, 'dispDueDate');
+                }
+
+                // คืนค่า input text
+                const allInputs = document.querySelectorAll('#jobOrderBox input[type="text"]');
+                data.inputs.forEach(item => {
+                    if (allInputs[item.index] && allInputs[item.index].id !== 'runNoDisplay') {
+                        allInputs[item.index].value = item.value;
+                    }
+                });
+
+                // คืนค่า checkbox
+                const allCheckboxes = document.querySelectorAll('#jobOrderBox input[type="checkbox"]');
+                data.checkboxes.forEach(item => {
+                    if (allCheckboxes[item.index]) {
+                        allCheckboxes[item.index].checked = item.checked;
+                    }
+                });
+
+                // คืนค่า textarea
+                const allTextareas = document.querySelectorAll('#jobOrderBox textarea');
+                data.textareas.forEach(item => {
+                    if (allTextareas[item.index]) {
+                        allTextareas[item.index].value = item.value;
+                    }
+                });
+
+                showAutoSaveStatus("✨ โหลดข้อมูลที่กรอกค้างไว้กลับมาแล้ว");
+            } catch (e) {
+                console.error('Auto-load error:', e);
+            }
+        }
+
+        function clearJobOrderAutoSave() {
+            localStorage.removeItem(AUTOSAVE_KEY);
+        }
+
+        function clearJobOrderForm() {
+            if (!confirm("⚠️ ต้องการล้างฟอร์มทั้งหมดใช่ไหม?\n(ข้อมูลที่กรอกไว้จะหาย)")) return;
+            
+            // ล้าง input text
+            document.querySelectorAll('#jobOrderBox input[type="text"]').forEach(el => {
+                if (el.id !== 'runNoDisplay') el.value = '';
+            });
+            // ล้าง select (ยกเว้นวันที่)
+            document.getElementById('jobOrderPage').value = '';
+            const salesEl = document.getElementById('salesName');
+            salesEl.value = '';
+            checkUrgent(salesEl);
+            // ล้างวันที่กำหนดส่ง (เก็บวันที่รับงาน = วันนี้)
+            document.getElementById('dueDate').value = '';
+            document.getElementById('dispDueDate').value = '';
+            // ล้าง checkbox
+            document.querySelectorAll('#jobOrderBox input[type="checkbox"]').forEach(el => {
+                el.checked = false;
+            });
+            // ล้าง textarea
+            document.querySelectorAll('#jobOrderBox textarea').forEach(el => {
+                el.value = '';
+            });
+            // ล้างรูป
+            jobOrderImages.images = [];
+            jobOrderImages.render();
+            // ล้าง localStorage
+            clearJobOrderAutoSave();
+            showAutoSaveStatus("🗑️ ล้างฟอร์มเรียบร้อย");
+        }
+
+        // แสดงสถานะ auto-save แล้วเฟดออก
+        let autoSaveStatusTimer = null;
+        function showAutoSaveStatus(message) {
+            const el = document.getElementById('autoSaveStatus');
+            if (!el) return;
+            el.textContent = message;
+            el.style.opacity = '1';
+            clearTimeout(autoSaveStatusTimer);
+            autoSaveStatusTimer = setTimeout(() => {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(() => { el.textContent = ''; el.style.opacity = '1'; el.style.transition = ''; }, 500);
+            }, 2000);
+        }
+
+        // ผูก auto-save เข้ากับทุก input ใน jobOrderBox (debounce 800ms)
+        let autoSaveTimer = null;
+        function triggerAutoSave() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(saveJobOrderForm, 800);
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const jobBox = document.getElementById('jobOrderBox');
+            if (!jobBox) return;
+            jobBox.addEventListener('input', triggerAutoSave);
+            jobBox.addEventListener('change', triggerAutoSave);
+        });
 
         // ============================================================
         // ฟังก์ชันแคปรูป (ซ่อนปุ่ม ❌ และปุ่ม + ก่อนแคป)
@@ -839,8 +1312,40 @@
         function saveJobOrder() {
             const btnSave = document.querySelector('#jobOrderMode .btn-save');
             const runNoInput = document.getElementById('runNoDisplay');
-            const salesName = document.getElementById('salesName').value || 'Unknown';
+            const salesNameSelect = document.getElementById('salesName');
+            const pageInput = document.getElementById('jobOrderPage');
+            const dueDateInput = document.getElementById('dueDate');
+            const dispDueDateInput = document.getElementById('dispDueDate');
 
+            // ====== เช็คข้อมูลจำเป็น ก่อนทำอะไรอย่างอื่น ======
+            // 1. ช่องเพจ
+            if (!pageInput.value) {
+                pageInput.classList.add('error-field');
+                pageInput.focus();
+                alert("⚠️ กรุณาเลือกเพจก่อนนะ");
+                return;
+            }
+            pageInput.classList.remove('error-field');
+
+            // 2. ชื่อเซล
+            if (!salesNameSelect.value) {
+                salesNameSelect.classList.add('error-field');
+                salesNameSelect.focus();
+                alert("⚠️ กรุณาเลือกชื่อเซลก่อนนะ");
+                return;
+            }
+            salesNameSelect.classList.remove('error-field');
+
+            // 3. วันที่กำหนดส่ง
+            if (!dueDateInput.value) {
+                dispDueDateInput.classList.add('error-field');
+                alert("⚠️ กรุณาเลือกวันที่กำหนดส่งก่อนนะ");
+                try { dueDateInput.showPicker(); } catch(e) {}
+                return;
+            }
+            dispDueDateInput.classList.remove('error-field');
+
+            const salesName = salesNameSelect.value || 'Unknown';
             const originalBtnText = btnSave.innerHTML;
             btnSave.disabled = true;
 
@@ -991,6 +1496,187 @@
         }
 
         // ============================================================
+        // บันทึก "ใบคิวกราฟิก" (ขอเลขก่อน → แคป → ส่ง → share)
+        // ============================================================
+        function saveGraphicQueue() {
+            const btnSave = document.querySelector('#graphicMode .btn-save');
+            const runNoInput = document.getElementById('graphicRunNoDisplay');
+            const salesName = document.getElementById('graphicSalesName').value;
+            const receiver = document.getElementById('graphicReceiver').value;
+            const page = document.getElementById('graphicPage').value.trim();
+            const size = document.getElementById('graphicSize').value.trim();
+            const details = document.getElementById('graphicDetails').value.trim();
+
+            // เช็คข้อมูลจำเป็น
+            if (!salesName) {
+                alert("⚠️ กรุณาเลือกชื่อเซลก่อนนะ");
+                return;
+            }
+            if (!receiver) {
+                alert("⚠️ กรุณาเลือกกราฟิกที่รับงานก่อนนะ");
+                return;
+            }
+
+            // รวบรวมชนิดงานที่ติ๊ก
+            const worktypes = [];
+            document.querySelectorAll('#graphicMode input[type="checkbox"][data-worktype]').forEach(cb => {
+                if (cb.checked) {
+                    if (cb.getAttribute('data-worktype') === 'อื่นๆ') {
+                        const otherText = document.getElementById('graphicWorktypeOther').value.trim();
+                        worktypes.push(otherText ? 'อื่นๆ: ' + otherText : 'อื่นๆ');
+                    } else {
+                        worktypes.push(cb.getAttribute('data-worktype'));
+                    }
+                }
+            });
+            const worktypeStr = worktypes.join(', ');
+
+            const originalBtnText = btnSave.innerHTML;
+            btnSave.disabled = true;
+            btnSave.innerHTML = "⏳ กำลังขอเลขใบงาน...";
+
+            // ====== ขั้นตอนที่ 1: ขอเลข Run No. (G prefix) ======
+            fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({
+                    action: "getGraphicRunNo",
+                    salesName: salesName,
+                    receiver: receiver
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "success") {
+                    throw new Error("ขอเลขไม่สำเร็จ: " + (data.message || "ไม่ทราบสาเหตุ"));
+                }
+                const runNo = data.runNo;
+                const rowIndex = data.rowIndex;
+
+                runNoInput.value = runNo;
+                runNoInput.style.color = "black";
+                runNoInput.style.fontWeight = "bold";
+                runNoInput.style.fontSize = "18px";
+
+                btnSave.innerHTML = "📸 กำลังสร้างรูปใบงาน...";
+
+                return captureGraphicElement().then(imgData => {
+                    btnSave.innerHTML = "☁️ กำลังอัปโหลดรูป...";
+                    const now = new Date();
+                    const d = String(now.getDate()).padStart(2, '0');
+                    const m = String(now.getMonth() + 1).padStart(2, '0');
+                    const y = now.getFullYear();
+                    const timeStamp = now.getTime();
+                    const fileName = `Graphic_${salesName}_${y}${m}${d}_${timeStamp}`;
+
+                    return fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "saveGraphicQueue",
+                            base64: imgData.split(',')[1],
+                            fileName: fileName,
+                            rowIndex: rowIndex,
+                            runNo: runNo,
+                            salesName: salesName,
+                            receiver: receiver,
+                            page: page,
+                            worktype: worktypeStr,
+                            size: size,
+                            details: details
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(saveData => {
+                        if (saveData.status !== "success") {
+                            throw new Error("บันทึกรูปไม่สำเร็จ: " + (saveData.message || "ไม่ทราบสาเหตุ"));
+                        }
+                        btnSave.innerHTML = "💾 กำลังเตรียมรูป...";
+                        const downloadFileName = `Graphic_${runNo.replace('/', '-')}_${salesName}.png`;
+                        return deliverImageToUser(imgData, downloadFileName, `ใบคิวกราฟิก ${runNo}`);
+                    });
+                });
+            })
+            .catch(error => {
+                alert("❌ เกิดข้อผิดพลาด: " + error.message + "\n\nกรุณาลองใหม่อีกครั้ง");
+                btnSave.innerHTML = originalBtnText;
+                btnSave.disabled = false;
+            });
+        }
+
+        // แคปรูปของใบคิวกราฟิก (auto-height ตามเนื้อหา)
+        function captureGraphicElement() {
+            const element = document.getElementById('graphicBox');
+            const height = element.offsetHeight;
+            return html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                windowWidth: 800,
+                onclone: function (clonedDoc) {
+                    const clonedBox = clonedDoc.getElementById('graphicBox');
+                    clonedBox.style.width = '800px';
+                    clonedBox.style.margin = '0';
+
+                    const placeholders = clonedDoc.querySelectorAll('.canvas-placeholder');
+                    placeholders.forEach(p => p.style.display = 'none');
+
+                    const noCaptureEls = clonedDoc.querySelectorAll('[data-no-capture="true"]');
+                    noCaptureEls.forEach(el => el.remove());
+
+                    // จัด grid ใหม่สำหรับรูป
+                    const galleries = clonedDoc.querySelectorAll('#graphicMode .image-gallery, #graphicBox .image-gallery');
+                    galleries.forEach(gallery => {
+                        const realSlots = gallery.querySelectorAll('.img-slot').length;
+                        if (realSlots === 0) {
+                            gallery.removeAttribute('data-count');
+                        } else if (realSlots === 1) {
+                            gallery.style.gridTemplateColumns = '1fr';
+                            gallery.style.gridTemplateRows = '1fr';
+                        } else if (realSlots === 2) {
+                            gallery.style.gridTemplateColumns = '1fr 1fr';
+                            gallery.style.gridTemplateRows = '1fr';
+                        } else if (realSlots === 3) {
+                            gallery.style.gridTemplateColumns = '1fr 1fr';
+                            gallery.style.gridTemplateRows = '1fr 1fr';
+                            const thirdSlot = gallery.querySelectorAll('.img-slot')[2];
+                            if (thirdSlot) thirdSlot.style.gridColumn = '1 / span 2';
+                        } else if (realSlots === 4) {
+                            gallery.style.gridTemplateColumns = '1fr 1fr';
+                            gallery.style.gridTemplateRows = '1fr 1fr';
+                        } else if (realSlots <= 6) {
+                            gallery.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                            gallery.style.gridTemplateRows = 'repeat(2, 1fr)';
+                        } else {
+                            gallery.style.gridTemplateColumns = 'repeat(4, 1fr)';
+                            gallery.style.gridTemplateRows = 'repeat(2, 1fr)';
+                        }
+                    });
+
+                    // แปลง textarea เป็น div
+                    const textareas = clonedDoc.querySelectorAll('#graphicBox textarea');
+                    textareas.forEach(textarea => {
+                        const div = clonedDoc.createElement('div');
+                        div.innerHTML = (textarea.value || '').replace(/\n/g, '<br>');
+                        const computed = window.getComputedStyle(textarea);
+                        div.style.width = '100%';
+                        div.style.minHeight = textarea.offsetHeight + 'px';
+                        div.style.padding = computed.padding;
+                        div.style.fontFamily = computed.fontFamily;
+                        div.style.fontSize = computed.fontSize;
+                        div.style.lineHeight = computed.lineHeight;
+                        div.style.border = computed.border;
+                        div.style.borderRadius = computed.borderRadius;
+                        div.style.boxSizing = 'border-box';
+                        div.style.wordWrap = 'break-word';
+                        div.style.whiteSpace = 'pre-wrap';
+                        textarea.parentNode.replaceChild(div, textarea);
+                    });
+                }
+            }).then(canvas => canvas.toDataURL('image/png'));
+        }
+
+        // ============================================================
         // ส่งรูปให้ user (Web Share API + Modal fallback)
         // ============================================================
         async function deliverImageToUser(imgDataUrl, fileName, title) {
@@ -1035,6 +1721,8 @@
         }
 
         function closeResultModal() {
+            // ล้าง auto-save เพราะบันทึกสำเร็จแล้ว → พร้อมรับใบใหม่
+            try { clearJobOrderAutoSave(); } catch(e) {}
             document.body.style.overflow = '';
             window.location.reload();
         }
@@ -1067,6 +1755,13 @@
                 formatDate(recvDateInput, 'dispRecvDate');
             }
 
+            // ตั้งค่าวันที่อัตโนมัติสำหรับใบคิวกราฟิก
+            const graphicDateInput = document.getElementById('graphicDate');
+            if (graphicDateInput) {
+                graphicDateInput.value = `${yyyy}-${mm}-${dd}`;
+                formatDate(graphicDateInput, 'dispGraphicDate');
+            }
+
             // เคลียร์สี error ของช่องเบอร์โทรตอน user เริ่มพิมพ์
             const phoneInput = document.getElementById('senderPhone');
             if (phoneInput) {
@@ -1082,6 +1777,30 @@
                     this.classList.remove('error');
                 });
             }
+
+            // เคลียร์สีแดง error-field ของช่องในใบสั่งงานเมื่อ user แก้ไข
+            const jobOrderPageInput = document.getElementById('jobOrderPage');
+            if (jobOrderPageInput) {
+                jobOrderPageInput.addEventListener('change', function() {
+                    this.classList.remove('error-field');
+                });
+            }
+            const salesNameSelectEl = document.getElementById('salesName');
+            if (salesNameSelectEl) {
+                salesNameSelectEl.addEventListener('change', function() {
+                    this.classList.remove('error-field');
+                });
+            }
+            const dueDateEl = document.getElementById('dueDate');
+            const dispDueDateEl = document.getElementById('dispDueDate');
+            if (dueDateEl) {
+                dueDateEl.addEventListener('change', function() {
+                    if (dispDueDateEl) dispDueDateEl.classList.remove('error-field');
+                });
+            }
+
+            // โหลดข้อมูล auto-save ถ้ามี (หลัง set วันที่รับงานแล้ว)
+            setTimeout(loadJobOrderForm, 100);
         };
     </script>
 
