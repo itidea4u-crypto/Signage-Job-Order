@@ -1033,7 +1033,15 @@
         // Auto-save ใบสั่งงาน (เซฟใน localStorage 24 ชม.)
         // ============================================================
         const AUTOSAVE_KEY = 'jobOrder_autosave';
-        const AUTOSAVE_TTL = 24 * 60 * 60 * 1000; // 24 ชั่วโมงเป็น ms
+
+        // ได้คีย์วันที่ในรูปแบบ YYYY-MM-DD ตาม timezone ของเครื่อง user
+        function getDateKey(timestamp) {
+            const d = timestamp ? new Date(timestamp) : new Date();
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
 
         function getJobOrderFormData() {
             const data = {
@@ -1081,8 +1089,10 @@
                 if (!raw) return;
                 const payload = JSON.parse(raw);
                 
-                // เช็ค TTL: ถ้าเกิน 24 ชม. → ลบทิ้ง
-                if (Date.now() - payload.timestamp > AUTOSAVE_TTL) {
+                // เช็ควันที่: ถ้าวันที่ที่เซฟไว้ ≠ วันนี้ → ลบทิ้ง (ข้ามวันแล้ว)
+                const savedDate = getDateKey(payload.timestamp);
+                const todayDate = getDateKey();
+                if (savedDate !== todayDate) {
                     localStorage.removeItem(AUTOSAVE_KEY);
                     return;
                 }
@@ -1142,16 +1152,16 @@
         function clearJobOrderForm() {
             if (!confirm("⚠️ ต้องการล้างฟอร์มทั้งหมดใช่ไหม?\n(ข้อมูลที่กรอกไว้จะหาย)")) return;
             
-            // ล้าง input text
+            // ล้าง input text (ยกเว้น runNoDisplay และช่องแสดงวันที่รับงาน)
             document.querySelectorAll('#jobOrderBox input[type="text"]').forEach(el => {
-                if (el.id !== 'runNoDisplay') el.value = '';
+                if (el.id !== 'runNoDisplay' && el.id !== 'dispRecvDate') el.value = '';
             });
-            // ล้าง select (ยกเว้นวันที่)
+            // ล้าง select เพจและชื่อเซล
             document.getElementById('jobOrderPage').value = '';
             const salesEl = document.getElementById('salesName');
             salesEl.value = '';
             checkUrgent(salesEl);
-            // ล้างวันที่กำหนดส่ง (เก็บวันที่รับงาน = วันนี้)
+            // ล้างวันที่กำหนดส่ง (ไม่ล้างวันที่รับงาน)
             document.getElementById('dueDate').value = '';
             document.getElementById('dispDueDate').value = '';
             // ล้าง checkbox
@@ -1167,6 +1177,18 @@
             jobOrderImages.render();
             // ล้าง localStorage
             clearJobOrderAutoSave();
+
+            // เซ็ตวันที่รับงานเป็นวันนี้ (เผื่อข้ามวัน)
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const recvDateInput = document.getElementById('recvDate');
+            if (recvDateInput) {
+                recvDateInput.value = `${yyyy}-${mm}-${dd}`;
+                formatDate(recvDateInput, 'dispRecvDate');
+            }
+
             showAutoSaveStatus("🗑️ ล้างฟอร์มเรียบร้อย");
         }
 
