@@ -1707,7 +1707,8 @@
 
             lastImageBlob = blob;
             lastImageFileName = fileName;
-
+ 
+            // มือถือ: ใช้ Web Share API
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({ files: [file], title: title });
@@ -1717,6 +1718,22 @@
                     console.log("Share cancelled or failed:", err);
                 }
             }
+ 
+            // คอม/fallback: ดาวน์โหลดด้วย Blob URL อัตโนมัติ
+            try {
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                // คืน memory หลัง 1 วินาที
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+            } catch (err) {
+                console.log("Download failed:", err);
+            }
+ 
             showResultModal(imgDataUrl, title);
         }
 
