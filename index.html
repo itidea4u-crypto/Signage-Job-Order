@@ -2498,7 +2498,13 @@
             const discount = parseNumber(document.getElementById('qtDiscount').value);
             const grandTotal = parseNumber(document.getElementById('qtGrandTotal').textContent);
             const itemsJson = JSON.stringify(formData.rows.filter(r => r.name || r.qty || r.price));
-            const customerName = document.getElementById('qtCustomerName').value || 'unnamed';
+            const customerNameRaw = document.getElementById('qtCustomerName').value || 'unnamed';
+            // Sanitize customer name สำหรับใช้ในชื่อไฟล์ (เก็บเฉพาะตัวอักษรไทย/อังกฤษ/ตัวเลข)
+            const customerName = customerNameRaw
+                .replace(/[^\u0E00-\u0E7F\w]/g, '_')   // แทนตัวอักษรที่ไม่ใช่ไทย/อังกฤษ/เลข ด้วย _
+                .replace(/_+/g, '_')                    // ยุบ _ ติดกันเป็นตัวเดียว
+                .replace(/^_+|_+$/g, '')                // ตัด _ หัว/ท้าย
+                .substring(0, 30) || 'customer';        // ตัดให้ยาวสุด 30 ตัวอักษร
             const now = new Date();
             const d = String(now.getDate()).padStart(2, '0');
             const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -2634,6 +2640,31 @@
                     // ซ่อน element ที่มี data-no-capture
                     const noCaptureEls = clonedDoc.querySelectorAll('[data-no-capture="true"]');
                     noCaptureEls.forEach(el => el.remove());
+
+                    // ซ่อนแถวว่างในตารางรายการ (ทั้ง name + qty + price ว่างหมด)
+                    const qtRows = clonedDoc.querySelectorAll('#qtTableBody tr');
+                    let visibleRowIndex = 0;
+                    qtRows.forEach((row) => {
+                        const inputs = row.querySelectorAll('input');
+                        let nameVal = '', qtyVal = '', priceVal = '';
+                        inputs.forEach(inp => {
+                            if (inp.classList.contains('qt-name'))  nameVal  = (inp.value || '').trim();
+                            if (inp.classList.contains('qt-qty'))   qtyVal   = (inp.value || '').trim();
+                            if (inp.classList.contains('qt-price')) priceVal = (inp.value || '').trim();
+                        });
+                        // ถ้าว่างหมด → ซ่อนแถว
+                        const isEmpty = !nameVal &&
+                                        (!qtyVal   || parseFloat(qtyVal)   === 0) &&
+                                        (!priceVal || parseFloat(priceVal) === 0);
+                        if (isEmpty) {
+                            row.style.display = 'none';
+                        } else {
+                            // อัปเดตเลขลำดับใหม่ให้ต่อเนื่องจากแถวที่ไม่ว่าง
+                            visibleRowIndex++;
+                            const numEl = row.querySelector('.qt-row-num');
+                            if (numEl) numEl.textContent = visibleRowIndex;
+                        }
+                    });
 
                     // แทนที่ช่องแนบรูปให้แสดงรูปจริงตอนแคป (ซ่อน placeholder ที่ว่างเปล่า)
                     const attachArea = clonedDoc.getElementById('qtAttachArea');
