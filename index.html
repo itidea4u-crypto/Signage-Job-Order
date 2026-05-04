@@ -9,6 +9,7 @@
     <title>ระบบใบสั่งงาน / ใบส่งของ</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         html, body { -webkit-text-size-adjust: 100%; }
@@ -382,144 +383,436 @@
             75% { transform: translateX(5px); }
         }
 
-        /* ===== ใบคิวกราฟิก ===== */
-        .graphic-box {
+        /* ช่องแนบรูปในใบเสนอราคา */
+        .qt-attachment-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .qt-attachment-slot {
+            flex: 1;
+            min-height: 120px;
+            border: 2px dashed #d1d5db;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #fafafa;
+            position: relative;
+            overflow: hidden;
+        }
+        .qt-attachment-slot:hover { border-color: #9ca3af; background: #f3f4f6; }
+        .qt-attachment-slot .placeholder {
+            font-size: 13px;
+            color: #9ca3af;
+            text-align: center;
+            pointer-events: none;
+        }
+        .qt-attachment-slot img.preview {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .qt-attachment-slot .btn-remove-attach {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(220,38,38,0.9);
+            color: white;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .quotation-box {
             width: 800px;
+            min-height: 1131px;
             background-color: white;
-            border: 3px solid #000;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
             position: relative;
             margin: 0 auto;
-        }
-        .graphic-header {
-            display: grid;
-            grid-template-columns: 2fr 2fr 1.2fr;
-            border-bottom: 2px solid #000;
-        }
-        .graphic-cell {
-            border-right: 2px solid #000;
-            padding: 8px 12px;
-            display: flex;
-            align-items: center;
-            font-size: 18px;
-            font-weight: 600;
-            min-height: 40px;
-        }
-        .graphic-cell:last-child { border-right: none; }
-        .graphic-cell input[type="text"],
-        .graphic-cell select {
-            border: none;
-            outline: none;
+            padding: 30px 40px;
             font-family: 'Sarabun', sans-serif;
-            font-size: 20px;
-            flex: 1;
-            width: 100%;
-            margin-left: 5px;
-            background: transparent;
-            -webkit-appearance: none;
-            border-radius: 0;
-            color: black;
         }
-        .graphic-section {
-            padding: 12px 20px;
-            border-bottom: 2px solid #000;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .graphic-section .section-label {
-            margin-bottom: 8px;
-            font-size: 18px;
-            font-weight: 700;
-        }
-        .graphic-worktype-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px 10px;
-        }
-        .graphic-worktype-grid label {
+        /* แถว 3 คอลัมน์: รูปป้าย + บัญชี + สรุปยอด */
+        .qt-bottom-row {
             display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            white-space: nowrap;
-            font-size: 17px;
-        }
-        .graphic-worktype-grid input[type="checkbox"] { transform: scale(1.3); margin: 0 3px; cursor: pointer; }
-        .graphic-worktype-other {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            grid-column: 1 / span 3;
-            margin-top: 2px;
-        }
-        .graphic-worktype-other input[type="text"] {
-            flex: 1;
-            border: none;
-            border-bottom: 1px solid #000;
-            outline: none;
-            font-family: 'Sarabun', sans-serif;
-            font-size: 17px;
-            padding: 2px 5px;
-            background: transparent;
-            -webkit-appearance: none;
-            border-radius: 0;
-        }
-        .graphic-size-row {
-            display: flex;
-            align-items: center;
             gap: 12px;
+            margin-bottom: 12px;
+            align-items: stretch;
         }
-        .graphic-size-row input {
+        /* คอลัมน์รูปป้าย (2 รูปซ้อน) */
+        .qt-signs-col {
             flex: 1;
-            border: none;
-            border-bottom: 2px solid #000;
-            outline: none;
-            font-family: 'Sarabun', sans-serif;
-            font-size: 20px;
-            padding: 4px 8px;
-            background: transparent;
-            -webkit-appearance: none;
-            border-radius: 0;
+            display: flex;
+            flex-direction: column;
         }
-        .graphic-canvas-area {
-            position: relative;
-            background-color: #fafafa;
-            min-height: 450px;
-            border-bottom: 2px solid #000;
-            overflow: hidden;
-        }
-        .graphic-canvas-area.empty { cursor: pointer; }
-        .graphic-detail-section {
-            padding: 12px 20px;
-            min-height: 140px;
+        .qt-signs-col .qt-attachment-area {
+            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 6px;
+            margin-bottom: 0;
         }
-        .graphic-detail-section textarea {
+        .qt-signs-col .qt-attachment-slot {
             flex: 1;
+            min-height: 90px;
+        }
+        /* คอลัมน์บัญชี (1 รูปสูง) */
+        .qt-bank-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .qt-bank-col .qt-bank-header {
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px 6px 0 0;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+        }
+        .qt-bank-col .qt-attachment-slot {
+            flex: 1;
+            min-height: 0;
+            border-radius: 0 0 6px 6px;
+            border-top: none;
+        }
+        /* หมายเหตุ */
+        .qt-notes-section {
+            margin-bottom: 12px;
+        }
+        .qt-notes-section .notes-label {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #374151;
+        }
+        .qt-notes-section textarea {
             width: 100%;
-            min-height: 110px;
-            resize: none;
-            border: 1px dashed #999;
-            border-radius: 4px;
-            padding: 10px;
+            min-height: 50px;
+            border: 1px dashed #d1d5db;
+            border-radius: 6px;
+            padding: 8px 10px;
             font-family: 'Sarabun', sans-serif;
-            font-size: 18px;
-            box-sizing: border-box;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
             outline: none;
+            box-sizing: border-box;
+            background: transparent;
+        }
+        .qt-notes-section textarea:focus {
+            border: 1px solid #6b7280;
+        }
+        /* Theme: ป้ายสวยเด่น (สีส้ม) */
+        .quotation-box.theme-suayden {
+            border-top: 6px solid #f59e0b;
+        }
+        .quotation-box.theme-suayden .qt-header-divider {
+            border-bottom: 3px solid #f59e0b;
+        }
+        .quotation-box.theme-suayden .qt-shop-name {
+            color: #1f2937;
+        }
+        .quotation-box.theme-suayden .qt-shop-slogan {
+            color: #f59e0b;
+        }
+        .quotation-box.theme-suayden .qt-table thead {
+            background-color: #fed7aa;
+        }
+        /* Theme: ป้ายไอเดีย (สีดำ) */
+        .quotation-box.theme-paiidea {
+            border-top: 4px solid #000;
+        }
+        .quotation-box.theme-paiidea .qt-header-divider {
+            border-bottom: 2px solid #000;
+        }
+        .quotation-box.theme-paiidea .qt-shop-name {
+            color: #1f2937;
+        }
+        .quotation-box.theme-paiidea .qt-shop-slogan {
+            color: #1f2937;
+        }
+        .quotation-box.theme-paiidea .qt-table thead {
+            background-color: #f3f4f6;
+        }
+        /* Theme: อักษรโลหะ (สีชมพู/rose) */
+        .quotation-box.theme-aksornloha {
+            border-top: 6px solid #f43f5e;
+        }
+        .quotation-box.theme-aksornloha .qt-header-divider {
+            border-bottom: 3px solid #f43f5e;
+        }
+        .quotation-box.theme-aksornloha .qt-shop-name {
+            color: #1f2937;
+        }
+        .quotation-box.theme-aksornloha .qt-shop-slogan {
+            color: #f43f5e;
+        }
+        .quotation-box.theme-aksornloha .qt-table thead {
+            background-color: #fecdd3;
+        }
+        /* Theme: ฟาร์มป้ายสวยรวยทรัพย์ (สีเขียว) */
+        .quotation-box.theme-farmpai {
+            border-top: 6px solid #16a34a;
+        }
+        .quotation-box.theme-farmpai .qt-header-divider {
+            border-bottom: 3px solid #16a34a;
+        }
+        .quotation-box.theme-farmpai .qt-shop-name {
+            color: #14532d;
+        }
+        .quotation-box.theme-farmpai .qt-shop-slogan {
+            color: #16a34a;
+        }
+        .quotation-box.theme-farmpai .qt-table thead {
+            background-color: #bbf7d0;
+        }
+
+        .qt-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .qt-shop-name {
+            font-size: 38px;
+            font-weight: 700;
+            line-height: 1;
+            margin: 0;
+        }
+        .qt-shop-slogan {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 4px;
+            margin-left: 30px;
+        }
+        .qt-doc-title {
+            text-align: right;
+        }
+        .qt-doc-title .main {
+            font-size: 38px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .qt-doc-title .sub {
+            font-size: 22px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .qt-header-divider {
+            margin: 8px 0 15px 0;
+        }
+
+        .qt-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-size: 16px;
+        }
+        .qt-info-left, .qt-info-right {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .qt-info-right { text-align: right; }
+        .qt-info-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .qt-info-row .label {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .qt-info-row input {
+            border: none;
+            border-bottom: 1px dotted #999;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 16px;
+            padding: 2px 4px;
             background: transparent;
             -webkit-appearance: none;
-            line-height: 1.4;
+            border-radius: 0;
+            min-width: 200px;
         }
-        .graphic-detail-section textarea:focus { border: 1px solid #000; }
-        .graphic-select.urgent {
-            background-color: #ef4444 !important;
-            color: black !important;
+        .qt-info-row .static-text {
+            font-weight: 600;
+        }
+
+        /* ตารางรายการ */
+        .qt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .qt-table th, .qt-table td {
+            border: 1px solid #d1d5db;
+            padding: 8px 6px;
+        }
+        .qt-table th {
+            font-weight: 700;
+            text-align: center;
+        }
+        .qt-table td input {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 16px;
+            background: transparent;
+            -webkit-appearance: none;
+            border-radius: 0;
+            padding: 2px;
+        }
+        .qt-table .col-no { width: 8%; text-align: center; }
+        .qt-table .col-name { width: 50%; }
+        .qt-table .col-qty { width: 10%; text-align: center; }
+        .qt-table .col-price { width: 16%; text-align: right; }
+        .qt-table .col-total { width: 16%; text-align: right; }
+        .qt-table td.amount { text-align: right; padding-right: 8px; font-weight: 600; }
+        .qt-table td input.text-right { text-align: right; }
+        .qt-table td input.text-center { text-align: center; }
+        .qt-row-remove {
+            background: none;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            line-height: 1;
+        }
+        .qt-row-remove:hover { color: #991b1b; }
+
+        /* ปุ่มเพิ่มรายการ (ไม่อยู่ในรูปที่แคป) */
+        .qt-add-row {
+            background-color: #f3f4f6;
+            border: 2px dashed #9ca3af;
+            color: #4b5563;
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .qt-add-row:hover { background-color: #e5e7eb; }
+
+        /* สรุปยอด */
+        .qt-summary {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 25px;
+        }
+        .qt-summary-table {
+            min-width: 320px;
+            font-size: 18px;
+        }
+        .qt-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            gap: 20px;
+        }
+        .qt-summary-row .label {
+            font-weight: 600;
+        }
+        .qt-summary-row .value {
+            font-weight: 700;
+            min-width: 80px;
+            text-align: right;
+        }
+        .qt-summary-row.divider { border-top: 1px dotted #999; padding-top: 8px; margin-top: 4px; }
+        .qt-summary-row.grand {
+            color: #dc2626;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .qt-summary-row.grand .value { font-size: 22px; }
+        .qt-summary-row .baht-text {
+            font-size: 16px;
+            color: #dc2626;
+            font-weight: 700;
+        }
+        .qt-discount-input {
+            width: 80px;
+            border: none;
+            border-bottom: 1px dotted #999;
+            outline: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 2px 4px;
+            background: transparent;
+            text-align: right;
+            -webkit-appearance: none;
+            border-radius: 0;
+        }
+
+        /* เงื่อนไข */
+        .qt-conditions {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 12px;
+        }
+        .qt-conditions .cond-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        /* ลายเซ็น */
+        .qt-signatures {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: auto;
+            padding-top: 8px;
+        }
+        .qt-sign-box {
+            flex: 1;
+            border: 1px solid #d1d5db;
             border-radius: 4px;
-            padding: 2px 5px;
+            padding: 15px 10px 10px 10px;
+            text-align: center;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+            overflow: hidden;
+        }
+        .qt-sign-box img {
+            max-height: 70px;
+        }
+        .qt-sign-box .sign-line {
+            border-top: 1px dotted #6b7280;
+            margin-bottom: 6px;
+        }
+        .qt-sign-box .sign-label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .qt-sign-box .sign-date {
+            font-size: 13px;
+            color: #6b7280;
         }
     </style>
 </head>
@@ -529,8 +822,7 @@
     <div class="tab-container">
         <button class="tab-btn active" id="tabJobOrder" onclick="switchTab('jobOrder')">📋 ใบสั่งงาน</button>
         <button class="tab-btn" id="tabDelivery" onclick="switchTab('delivery')">📦 ใบส่งของ</button>
-        <!-- ซ่อนชั่วคราว: ยังไม่ใช้ -->
-        <button class="tab-btn hidden" id="tabGraphic" onclick="switchTab('graphic')">🎨 ใบคิวกราฟิก</button>
+        <button class="tab-btn" id="tabQuotation" onclick="switchTab('quotation')">💰 ใบเสนอราคา</button>
     </div>
 
     <!-- ===== โหมด 1: ใบสั่งงาน ===== -->
@@ -705,97 +997,187 @@
     </div>
 
     <!-- ===================================================== -->
-    <!-- ===== โหมด 3: ใบคิวกราฟิก =========================== -->
+    <!-- ===== โหมด 4: ใบเสนอราคา ============================== -->
     <!-- ===================================================== -->
-    <div id="graphicMode" class="hidden">
-        <div class="graphic-box" id="graphicBox">
+    <div id="quotationMode" class="hidden">
+        <!-- Search Box: ค้นหาใบเก่าเพื่อแก้ไข -->
+        <div id="qtSearchBox" style="width: 800px; margin: 0 auto 10px; padding: 12px 20px; background: #fffbeb; border: 2px solid #fcd34d; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 15px; font-weight: 600; white-space: nowrap;">🔍 แก้ไขใบเก่า:</span>
+            <input type="text" id="qtSearchInput" placeholder="พิมพ์เลขใบ เช่น QT2604001" style="flex: 1; padding: 8px 12px; font-family: 'Sarabun', sans-serif; font-size: 15px; border: 2px solid #d1d5db; border-radius: 6px; outline: none;">
+            <button onclick="searchQuotation()" style="padding: 8px 18px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-family: 'Sarabun', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;">โหลดข้อมูล</button>
+            <span id="qtSearchStatus" style="font-size: 14px; color: #6b7280;"></span>
+        </div>
 
-            <!-- Header: เพจ, เซล, Run No. -->
-            <div class="graphic-header">
-                <div class="graphic-cell">เพจ: <input type="text" id="graphicPage"></div>
-                <div class="graphic-cell">ชื่อ: 
-                    <select id="graphicSalesName" class="graphic-select" onchange="checkGraphicUrgent(this)">
-                        <option value="">- เลือก -</option>
-                        <option value="จุ๋ม">จุ๋ม</option>
-                        <option value="จุ๋ม (ด่วน)">จุ๋ม (ด่วน)</option>
-                        <option value="กรีน">กรีน</option>
-                        <option value="กรีน (ด่วน)">กรีน (ด่วน)</option>
-                        <option value="ส้ม">ส้ม</option>
-                        <option value="ส้ม (ด่วน)">ส้ม (ด่วน)</option>
-                        <option value="เมย์">เมย์</option>
-                        <option value="เมย์ (ด่วน)">เมย์ (ด่วน)</option>
-                        <option value="อุ๋ม">อุ๋ม</option>
-                        <option value="อุ๋ม (ด่วน)">อุ๋ม (ด่วน)</option>
-                        <option value="เบล">เบล</option>
-                        <option value="เบล (ด่วน)">เบล (ด่วน)</option>
-                    </select>
+        <!-- Edit Mode Indicator (ซ่อนเริ่มต้น) -->
+        <div id="qtEditModeBar" style="display: none; width: 800px; margin: 0 auto 10px; padding: 10px 20px; background: #dcfce7; border: 2px solid #16a34a; border-radius: 8px; display: none; align-items: center; justify-content: space-between;">
+            <span style="font-size: 15px; font-weight: 700; color: #15803d;">✏️ โหมดแก้ไขใบ: <span id="qtEditModeRunNo"></span></span>
+            <button onclick="exitEditMode()" style="padding: 6px 14px; background: #6b7280; color: white; border: none; border-radius: 6px; font-family: 'Sarabun', sans-serif; font-size: 14px; cursor: pointer;">ยกเลิกการแก้ไข</button>
+        </div>
+        <div style="width: 800px; margin: 0 auto 15px; padding: 12px 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">เลือกเพจ:</span>
+            <select id="quotationPage" onchange="applyQuotationTheme()" style="flex: 1; padding: 8px 12px; font-family: 'Sarabun', sans-serif; font-size: 16px; border: 2px solid #d1d5db; border-radius: 6px; background: white; outline: none;">
+                <option value="suayden">ป้ายสวยเด่น เห็นแต่ไกล</option>
+                <option value="paiidea">ป้ายไอเดีย Pai idea</option>
+                <option value="aksornloha">อักษรโลหะ</option>
+                <option value="farmpai">ฟาร์มป้ายสวยรวยทรัพย์</option>
+            </select>
+            <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">ประเภทเอกสาร:</span>
+            <select id="quotationDocType" onchange="applyDocumentType()" style="flex: 1; padding: 8px 12px; font-family: 'Sarabun', sans-serif; font-size: 16px; border: 2px solid #d1d5db; border-radius: 6px; background: white; outline: none;">
+                <option value="quotation">💰 ใบเสนอราคา</option>
+                <option value="invoice">📄 ใบแจ้งหนี้</option>
+                <option value="receipt">✅ ใบเสร็จรับเงิน</option>
+            </select>
+        </div>
+
+        <!-- ตัวใบจริง (ที่จะแคปเป็นรูป) -->
+        <div class="quotation-box theme-suayden" id="quotationBox">
+            
+            <!-- Header: ชื่อร้าน + ใบเสนอราคา -->
+            <div class="qt-top">
+                <div>
+                    <div class="qt-shop-name" id="qtShopName">ป้ายสวยเด่น</div>
+                    <div class="qt-shop-slogan" id="qtShopSlogan">เห็นแต่ไกล</div>
                 </div>
-                <div class="graphic-cell">No. <input type="text" id="graphicRunNoDisplay" placeholder="(อัตโนมัติ)" readonly style="font-size: 14px; color: gray;"></div>
+                <div class="qt-doc-title">
+                    <div class="main" id="qtDocTitle">ใบเสนอราคา</div>
+                    <div class="sub" id="qtDocSubTitle">/quotation</div>
+                </div>
             </div>
+            <div class="qt-header-divider"></div>
 
-            <!-- Row 2: วันที่, กราฟิกรับ -->
-            <div class="graphic-header" style="grid-template-columns: 1fr 1fr;">
-                <div class="graphic-cell">
-                    วันที่: 
-                    <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}">
-                        <input type="text" id="dispGraphicDate" placeholder="วว/ดด/ปปปป" readonly>
-                        <input type="date" id="graphicDate" onchange="formatDate(this, 'dispGraphicDate')">
+            <!-- ข้อมูลลูกค้า + เลขที่ + วันที่ -->
+            <div class="qt-info">
+                <div class="qt-info-left">
+                    <div style="font-size: 14px; color: #6b7280; margin-bottom: 2px;">รายละเอียดลูกค้า</div>
+                    <div class="qt-info-row"><span class="label">ลูกค้า :</span> <input type="text" id="qtCustomerName"></div>
+                    <div class="qt-info-row"><span class="label">ที่อยู่ :</span> <input type="text" id="qtCustomerAddress"></div>
+                    <div class="qt-info-row"><span class="label">เบอร์ :</span> <input type="text" id="qtCustomerPhone" inputmode="tel"></div>
+                </div>
+                <div class="qt-info-right">
+                    <div class="qt-info-row" style="justify-content: flex-end;">
+                        <span class="label">เลขที่ :</span> 
+                        <span class="static-text" id="qtRunNoDisplay">(อัตโนมัติ)</span>
+                    </div>
+                    <div class="qt-info-row" id="qtRefRow" style="justify-content: flex-end; display: none;">
+                        <span class="label" style="color: #6b7280; font-size: 14px;">อ้างอิง :</span>
+                        <span id="qtRefDisplay" style="color: #6b7280; font-size: 14px; font-weight: 600;"></span>
+                    </div>
+                    <div class="qt-info-row" style="justify-content: flex-end;">
+                        <span class="label">วันที่ :</span>
+                        <div class="date-wrapper" onclick="try{this.querySelector('input[type=date]').showPicker();}catch(e){}" style="position: relative; display: inline-block; min-width: 110px;">
+                            <input type="text" id="dispQtDate" placeholder="วว/ดด/ปปปป" readonly style="border: none; padding: 0; min-width: 110px; text-align: right; background: white; pointer-events: none;">
+                            <input type="date" id="qtDate" onchange="formatDate(this, 'dispQtDate')" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                        </div>
                     </div>
                 </div>
-                <div class="graphic-cell" style="border-right: none;">
-                    กราฟิกรับ:
-                    <select id="graphicReceiver">
-                        <option value="">- เลือก -</option>
-                        <option value="ภรีม">ภรีม</option>
-                        <option value="แป้ง">แป้ง</option>
-                        <option value="จิ๊บ">จิ๊บ</option>
-                    </select>
+            </div>
+
+            <!-- ตารางรายการ -->
+            <table class="qt-table" id="qtTable">
+                <thead>
+                    <tr>
+                        <th class="col-no">ลำดับ</th>
+                        <th class="col-name">รายการ</th>
+                        <th class="col-qty">จำนวน</th>
+                        <th class="col-price">ราคา/หน่วย</th>
+                        <th class="col-total">จำนวนเงิน</th>
+                    </tr>
+                </thead>
+                <tbody id="qtTableBody">
+                    <!-- แถวจะถูกเพิ่มด้วย JS -->
+                </tbody>
+            </table>
+
+            <!-- ปุ่มเพิ่มรายการ (ไม่อยู่ในรูป) -->
+            <button type="button" class="qt-add-row" onclick="addQtRow()" data-no-capture="true">
+                ➕ เพิ่มรายการ
+            </button>
+
+            <!-- แถว 3 คอลัมน์: รูปป้าย + บัญชี + สรุปยอด -->
+            <div class="qt-bottom-row">
+
+                <!-- คอลัมน์ 1: รูปป้าย/ตัวอย่าง (2 รูปซ้อน) -->
+                <div class="qt-signs-col">
+                    <div style="font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 600;">📷 รูปป้าย/ตัวอย่าง</div>
+                    <div class="qt-attachment-area" id="qtAttachArea">
+                        <div class="qt-attachment-slot" id="qtAttach1" onclick="triggerQtAttach(1)">
+                            <input type="file" id="qtAttachInput1" accept="image/*" style="display:none" onchange="handleQtAttach(this, 1)">
+                            <div class="placeholder">📷<br>แตะเพื่อแนบรูป</div>
+                        </div>
+                        <div class="qt-attachment-slot" id="qtAttach2" onclick="triggerQtAttach(2)">
+                            <input type="file" id="qtAttachInput2" accept="image/*" style="display:none" onchange="handleQtAttach(this, 2)">
+                            <div class="placeholder">📷<br>แตะเพื่อแนบรูป</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- คอลัมน์ 2: ช่องทางการโอนเงิน -->
+                <div class="qt-bank-col" id="qtBankSection">
+                    <div class="qt-bank-header">💳 ช่องทางการโอนเงิน</div>
+                    <div class="qt-attachment-slot" id="qtAttach3" onclick="triggerQtAttach(3)">
+                        <input type="file" id="qtAttachInput3" accept="image/*" style="display:none" onchange="handleQtAttach(this, 3)">
+                        <div class="placeholder">📷<br>แตะเพื่อแนบ<br>QR / เลขบัญชี</div>
+                    </div>
+                </div>
+
+                <!-- คอลัมน์ 3: สรุปยอด -->
+                <div class="qt-summary" style="margin-bottom: 0; flex-shrink: 0;">
+                    <div class="qt-summary-table">
+                        <div class="qt-summary-row">
+                            <span class="label">รวมทั้งสิ้น</span>
+                            <span class="value" id="qtSubtotal">0</span>
+                        </div>
+                        <div class="qt-summary-row">
+                            <span class="label">ส่วนลด</span>
+                            <input type="text" id="qtDiscount" class="qt-discount-input" value="0" inputmode="decimal" oninput="updateQtTotals()">
+                        </div>
+                        <div class="qt-summary-row divider grand">
+                            <span class="label">จำนวนเงินรวมทั้งสิ้น</span>
+                            <span class="value" id="qtGrandTotal">0</span>
+                        </div>
+                        <div class="qt-summary-row" style="justify-content: flex-end;">
+                            <span class="baht-text" id="qtGrandTotalText">(ศูนย์บาทถ้วน)</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ชนิดงาน -->
-            <div class="graphic-section">
-                <div class="section-label">ชนิดของงาน:</div>
-                <div class="graphic-worktype-grid">
-                    <label><input type="checkbox" data-worktype="กล่องไฟ"> งานกล่องไฟ</label>
-                    <label><input type="checkbox" data-worktype="ไดคัท"> งานไดคัท</label>
-                    <label><input type="checkbox" data-worktype="ตัวอักษร"> งานตัวอักษร</label>
-                    <label><input type="checkbox" data-worktype="ไฟปิงปอง"> งานไฟปิงปอง</label>
-                    <label><input type="checkbox" data-worktype="infinity"> งาน infinity</label>
-                    <label><input type="checkbox" data-worktype="ไร้คิ้ว"> งานไร้คิ้ว</label>
-                    <label><input type="checkbox" data-worktype="พื้นไม้"> งานพื้นไม้</label>
-                    <label class="graphic-worktype-other" style="grid-column: 2 / span 2;">
-                        <input type="checkbox" id="graphicWorktypeOtherCheck" data-worktype="อื่นๆ"> อื่นๆ:
-                        <input type="text" id="graphicWorktypeOther" placeholder="ระบุ...">
-                    </label>
+            <!-- หมายเหตุ -->
+            <div class="qt-notes-section" id="qtNotesSection">
+                <div class="notes-label">📝 หมายเหตุ</div>
+                <textarea id="qtNotes" placeholder="พิมพ์หมายเหตุเพิ่มเติม เช่น แต่งคันสติกเกอร์ภายในร้าน, เปลี่ยนป้าย 1 ป้าย..." oninput="saveQuotationForm()"></textarea>
+            </div>
+
+            <!-- เงื่อนไข (ใบแจ้งหนี้/ใบเสร็จจะซ่อน) -->
+            <div class="qt-conditions" id="qtConditions">
+                <div class="cond-title">เงื่อนไข</div>
+                <div>1. ชำระงวดที่ 1 มัดจำ = 50% (ชำระก่อนทำแบบ/เริ่มผลิต)</div>
+                <div>2. ชำระงวดที่ 2 ชำระส่วนที่เหลือ (ถ่ายรูป/ส่งวีดีโอก่อนส่งงาน)</div>
+                <div>3. เริ่มผลิตหลังยืนยันแบบ</div>
+            </div>
+
+            <!-- ลายเซ็น -->
+            <div class="qt-signatures">
+                <div class="qt-sign-box" id="qtSignBoxLeft">
+                    <div class="sign-line"></div>
+                    <div class="sign-label" id="qtSignLabelLeft">ยืนยันคำสั่งซื้อ</div>
+                    <div class="sign-date" id="qtSignDateLeft">28/4/2026</div>
                 </div>
-            </div>
-
-            <!-- ขนาด -->
-            <div class="graphic-section">
-                <div class="graphic-size-row">
-                    <span style="white-space: nowrap;">📐 ขนาด:</span>
-                    <input type="text" id="graphicSize" placeholder="เช่น 200x100 cm, ทรงกลม 80cm 2 หน้า">
+                <div class="qt-sign-box">
+                    <img src="data:image/png;base64,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" style="width: 92%; max-width: 280px; object-fit: contain; margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto;">
+                    <div class="sign-line"></div>
+                    <div class="sign-label" id="qtSignLabelRight">ผู้เสนอราคา</div>
+                    <div class="sign-date" id="qtSignDateRight">28/4/2026</div>
                 </div>
-            </div>
-
-            <!-- พื้นที่แนบรูป -->
-            <div class="graphic-canvas-area empty" id="graphicCanvasArea">
-                <span class="canvas-placeholder" id="graphicPlaceholderText">📷 แตะเพื่อแนบรูปแบบ<br>(เลือกได้หลายรูป - ลูกค้าต้นแบบ/ตัวอย่าง)</span>
-                <input type="file" id="graphicImageUpload" accept="image/*" multiple style="display: none;">
-                <div id="graphicImageGallery" class="image-gallery"></div>
-            </div>
-
-            <!-- รายละเอียดงาน -->
-            <div class="graphic-detail-section">
-                <div style="font-weight: 700; font-size: 18px;">📝 รายละเอียดงาน:</div>
-                <textarea id="graphicDetails" placeholder="พิมพ์คำอธิบายของงาน เช่น สี, ฟอนต์, แนวทางที่ต้องการ, ข้อมูลบนป้าย..."></textarea>
             </div>
 
         </div>
 
         <div style="text-align: center;">
-            <button class="btn-save" onclick="saveGraphicQueue()">💾 บันทึกใบคิวกราฟิก</button>
+            <div id="qtAutoSaveStatus" style="font-size: 13px; color: #6b7280; margin: 8px 0; min-height: 18px;"></div>
+            <button class="btn-save" id="qtSaveBtn" onclick="saveQuotation()">💾 บันทึกใบเสนอราคา</button>
+            <button id="qtNewBtn" onclick="startNewQuotation()" style="display: none; margin-left: 10px; padding: 15px 25px; background-color: #059669; color: white; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif;">🆕 สร้างใบใหม่</button>
+            <button class="btn-clear" onclick="clearQuotationForm()" style="margin-left: 10px; padding: 15px 25px; background-color: #6b7280; color: white; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif;">🗑️ ล้างฟอร์ม</button>
         </div>
     </div>
 
@@ -815,6 +1197,12 @@
 
         let lastImageBlob = null;
         let lastImageFileName = "";
+
+        // ===== Quotation edit mode =====
+        let qtCurrentRunNo = null;
+        let qtCurrentRowIndex = null;
+        let qtCurrentSheetName = null;
+        let qtRefNo = null; // เลข QT ที่อ้างอิง (สำหรับใบ IN/RC)
 
         // ============================================================
         // ImageManager: จัดการรูปในแต่ละโหมด (เก็บเป็น array → ลบ/เพิ่มได้)
@@ -961,22 +1349,15 @@
             canvasAreaId: 'deliveryCanvasArea'
         });
 
-        const graphicImages = new ImageManager({
-            inputId: 'graphicImageUpload',
-            galleryId: 'graphicImageGallery',
-            placeholderId: 'graphicPlaceholderText',
-            canvasAreaId: 'graphicCanvasArea'
-        });
-
         // ===== สลับแท็บ =====
         function switchTab(mode) {
             // ซ่อนทุกโหมดก่อน
             document.getElementById('jobOrderMode').classList.add('hidden');
             document.getElementById('deliveryMode').classList.add('hidden');
-            document.getElementById('graphicMode').classList.add('hidden');
+            document.getElementById('quotationMode').classList.add('hidden');
             document.getElementById('tabJobOrder').classList.remove('active');
             document.getElementById('tabDelivery').classList.remove('active');
-            document.getElementById('tabGraphic').classList.remove('active');
+            document.getElementById('tabQuotation').classList.remove('active');
 
             // แสดงโหมดที่เลือก
             if (mode === 'jobOrder') {
@@ -985,17 +1366,9 @@
             } else if (mode === 'delivery') {
                 document.getElementById('deliveryMode').classList.remove('hidden');
                 document.getElementById('tabDelivery').classList.add('active');
-            } else if (mode === 'graphic') {
-                document.getElementById('graphicMode').classList.remove('hidden');
-                document.getElementById('tabGraphic').classList.add('active');
-            }
-        }
-
-        function checkGraphicUrgent(selectElement) {
-            if (selectElement.value.includes('(ด่วน)')) {
-                selectElement.classList.add('urgent');
-            } else {
-                selectElement.classList.remove('urgent');
+            } else if (mode === 'quotation') {
+                document.getElementById('quotationMode').classList.remove('hidden');
+                document.getElementById('tabQuotation').classList.add('active');
             }
         }
 
@@ -1518,53 +1891,677 @@
         }
 
         // ============================================================
-        // บันทึก "ใบคิวกราฟิก" (ขอเลขก่อน → แคป → ส่ง → share)
+        // ใบเสนอราคา - Theme + ตาราง + คำนวณ + บันทึก
         // ============================================================
-        function saveGraphicQueue() {
-            const btnSave = document.querySelector('#graphicMode .btn-save');
-            const runNoInput = document.getElementById('graphicRunNoDisplay');
-            const salesName = document.getElementById('graphicSalesName').value;
-            const receiver = document.getElementById('graphicReceiver').value;
-            const page = document.getElementById('graphicPage').value.trim();
-            const size = document.getElementById('graphicSize').value.trim();
-            const details = document.getElementById('graphicDetails').value.trim();
-
-            // เช็คข้อมูลจำเป็น
-            if (!salesName) {
-                alert("⚠️ กรุณาเลือกชื่อเซลก่อนนะ");
-                return;
+        // ===== Config ประเภทเอกสาร =====
+        const QT_DOC_TYPES = {
+            quotation: {
+                titleTh: 'ใบเสนอราคา',
+                titleEn: '/quotation',
+                showConditions: true,
+                signLeft: 'ยืนยันคำสั่งซื้อ',
+                signRight: 'ผู้เสนอราคา',
+                showLeftSign: true,
+                btnLabel: '💾 บันทึกใบเสนอราคา',
+                sheetAction: 'getQuotationRunNo',
+                saveAction: 'saveQuotation'
+            },
+            invoice: {
+                titleTh: 'ใบแจ้งหนี้',
+                titleEn: '/Invoice',
+                showConditions: false,
+                signLeft: 'ผู้อนุมัติ',
+                signRight: 'ผู้ออกเอกสาร',
+                showLeftSign: true,
+                btnLabel: '💾 บันทึกใบแจ้งหนี้',
+                sheetAction: 'getInvoiceRunNo',
+                saveAction: 'saveInvoice'
+            },
+            receipt: {
+                titleTh: 'ใบเสร็จรับเงิน',
+                titleEn: '/receipt',
+                showConditions: false,
+                signLeft: '',
+                signRight: 'ผู้เสนอราคา',
+                showLeftSign: false,
+                btnLabel: '💾 บันทึกใบเสร็จรับเงิน',
+                sheetAction: 'getReceiptRunNo',
+                saveAction: 'saveReceipt'
             }
-            if (!receiver) {
-                alert("⚠️ กรุณาเลือกกราฟิกที่รับงานก่อนนะ");
-                return;
-            }
+        };
 
-            // รวบรวมชนิดงานที่ติ๊ก
-            const worktypes = [];
-            document.querySelectorAll('#graphicMode input[type="checkbox"][data-worktype]').forEach(cb => {
-                if (cb.checked) {
-                    if (cb.getAttribute('data-worktype') === 'อื่นๆ') {
-                        const otherText = document.getElementById('graphicWorktypeOther').value.trim();
-                        worktypes.push(otherText ? 'อื่นๆ: ' + otherText : 'อื่นๆ');
-                    } else {
-                        worktypes.push(cb.getAttribute('data-worktype'));
-                    }
+        function applyDocumentType() {
+            const docType = document.getElementById('quotationDocType').value;
+            const config = QT_DOC_TYPES[docType];
+            if (!config) return;
+
+            // เปลี่ยนหัวใบ
+            document.getElementById('qtDocTitle').textContent = config.titleTh;
+            document.getElementById('qtDocSubTitle').textContent = config.titleEn;
+
+            // เงื่อนไข
+            const cond = document.getElementById('qtConditions');
+            if (cond) cond.style.display = config.showConditions ? '' : 'none';
+
+            // ลายเซ็น
+            const signBoxLeft = document.getElementById('qtSignBoxLeft');
+            if (signBoxLeft) signBoxLeft.style.display = config.showLeftSign ? '' : 'none';
+            document.getElementById('qtSignLabelLeft').textContent = config.signLeft;
+            document.getElementById('qtSignLabelRight').textContent = config.signRight;
+
+            // ปุ่มบันทึก
+            const btn = document.getElementById('qtSaveBtn');
+            if (btn) btn.textContent = config.btnLabel;
+
+            // อัปเดต Run No. display ใหม่ (ล้างเลขเก่า)
+            document.getElementById('qtRunNoDisplay').textContent = '(อัตโนมัติ)';
+
+            // อัปเดต placeholder ช่องค้นหาตาม docType
+            const searchInput = document.getElementById('qtSearchInput');
+            if (searchInput) {
+                if (docType === 'invoice' || docType === 'receipt') {
+                    searchInput.placeholder = 'พิมพ์เลข QT เพื่อดึงข้อมูล เช่น QT2604001';
+                } else {
+                    searchInput.placeholder = 'พิมพ์เลขใบ เช่น QT2604001';
                 }
+            }
+
+            // ล้าง ref เมื่อเปลี่ยน docType
+            clearQtRefDisplay();
+
+            saveQuotationForm();
+        }
+
+        // ===== Theme ร้าน =====
+        const QT_THEMES = {
+            suayden: {
+                shopName: 'ป้ายสวยเด่น',
+                shopSlogan: 'เห็นแต่ไกล',
+                themeClass: 'theme-suayden'
+            },
+            paiidea: {
+                shopName: 'ป้ายไอเดีย',
+                shopSlogan: 'Pai idea',
+                themeClass: 'theme-paiidea'
+            },
+            aksornloha: {
+                shopName: 'อักษรโลหะ',
+                shopSlogan: '',
+                themeClass: 'theme-aksornloha'
+            },
+            farmpai: {
+                shopName: 'ฟาร์มป้ายสวยรวยทรัพย์',
+                shopSlogan: '',
+                themeClass: 'theme-farmpai'
+            }
+        };
+
+        function applyQuotationTheme() {
+            const select = document.getElementById('quotationPage');
+            const theme = QT_THEMES[select.value];
+            if (!theme) return;
+            const box = document.getElementById('quotationBox');
+            // ลบ theme class เก่าออก
+            box.classList.remove('theme-suayden', 'theme-paiidea', 'theme-aksornloha', 'theme-farmpai');
+            box.classList.add(theme.themeClass);
+            // อัปเดตชื่อร้าน
+            document.getElementById('qtShopName').textContent = theme.shopName;
+            const sloganEl = document.getElementById('qtShopSlogan');
+            sloganEl.textContent = theme.shopSlogan;
+            sloganEl.style.display = theme.shopSlogan ? '' : 'none';
+            saveQuotationForm();
+        }
+
+        // ===== ตารางรายการ =====
+        let qtRowCount = 0;
+        function addQtRow(name, qty, price) {
+            qtRowCount++;
+            const tbody = document.getElementById('qtTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="col-no">
+                    <span class="qt-row-num">${tbody.children.length + 1}</span>
+                    <button type="button" class="qt-row-remove" data-no-capture="true" onclick="removeQtRow(this)" title="ลบแถว">✕</button>
+                </td>
+                <td class="col-name"><input type="text" class="qt-name" value="${name || ''}" oninput="saveQuotationForm()"></td>
+                <td class="col-qty"><input type="text" class="text-center qt-qty" inputmode="decimal" value="${qty || ''}" oninput="updateQtTotals()"></td>
+                <td class="col-price"><input type="text" class="text-right qt-price" inputmode="decimal" value="${price || ''}" oninput="updateQtTotals()"></td>
+                <td class="col-total amount qt-total">0</td>
+            `;
+            // ทำให้ปุ่ม X อยู่มุมขวาบนของ cell ลำดับ
+            const td = tr.querySelector('.col-no');
+            td.style.position = 'relative';
+            const btn = tr.querySelector('.qt-row-remove');
+            btn.style.position = 'absolute';
+            btn.style.top = '2px';
+            btn.style.right = '2px';
+            btn.style.fontSize = '14px';
+            tbody.appendChild(tr);
+            updateQtTotals();
+        }
+
+        function removeQtRow(btn) {
+            const tr = btn.closest('tr');
+            tr.remove();
+            renumberQtRows();
+            updateQtTotals();
+            saveQuotationForm();
+        }
+
+        function renumberQtRows() {
+            const rows = document.querySelectorAll('#qtTableBody tr');
+            rows.forEach((tr, i) => {
+                const numEl = tr.querySelector('.qt-row-num');
+                if (numEl) numEl.textContent = i + 1;
             });
-            const worktypeStr = worktypes.join(', ');
+        }
 
-            const originalBtnText = btnSave.innerHTML;
-            btnSave.disabled = true;
-            btnSave.innerHTML = "⏳ กำลังขอเลขใบงาน...";
+        function parseNumber(str) {
+            if (!str) return 0;
+            const n = parseFloat(String(str).replace(/,/g, ''));
+            return isNaN(n) ? 0 : n;
+        }
 
-            // ====== ขั้นตอนที่ 1: ขอเลข Run No. (G prefix) ======
+        function formatNumber(n) {
+            if (n === 0) return '0';
+            return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+
+        function updateQtTotals() {
+            let subtotal = 0;
+            const rows = document.querySelectorAll('#qtTableBody tr');
+            rows.forEach(tr => {
+                const qty = parseNumber(tr.querySelector('.qt-qty').value);
+                const price = parseNumber(tr.querySelector('.qt-price').value);
+                const total = qty * price;
+                tr.querySelector('.qt-total').textContent = formatNumber(total);
+                subtotal += total;
+            });
+            const discount = parseNumber(document.getElementById('qtDiscount').value);
+            const grand = Math.max(0, subtotal - discount);
+            document.getElementById('qtSubtotal').textContent = formatNumber(subtotal);
+            document.getElementById('qtGrandTotal').textContent = formatNumber(grand);
+            document.getElementById('qtGrandTotalText').textContent = '(' + numberToThaiBaht(grand) + ')';
+            saveQuotationForm();
+        }
+
+        // ===== แปลงเลขเป็นตัวอักษรไทย =====
+        function numberToThaiBaht(num) {
+            if (num === 0 || isNaN(num)) return 'ศูนย์บาทถ้วน';
+            const numStr = num.toFixed(2);
+            const [bahtPart, satangPart] = numStr.split('.');
+            const bahtText = readThaiNumber(parseInt(bahtPart, 10));
+            const satang = parseInt(satangPart, 10);
+            if (satang > 0) {
+                return bahtText + 'บาท' + readThaiNumber(satang) + 'สตางค์';
+            }
+            return bahtText + 'บาทถ้วน';
+        }
+
+        function readThaiNumber(n) {
+            if (n === 0) return 'ศูนย์';
+            const digits = ['', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า'];
+            const positions = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
+            const str = n.toString();
+            let result = '';
+            const len = str.length;
+            for (let i = 0; i < len; i++) {
+                const digit = parseInt(str[i], 10);
+                const pos = len - i - 1;
+                if (digit === 0) continue;
+                // กรณีพิเศษ
+                if (pos === 0 && digit === 1 && len > 1) {
+                    result += 'เอ็ด';
+                } else if (pos === 1 && digit === 2) {
+                    result += 'ยี่' + positions[pos];
+                } else if (pos === 1 && digit === 1) {
+                    result += positions[pos];
+                } else {
+                    result += digits[digit] + positions[pos];
+                }
+            }
+            return result;
+        }
+
+        // ===== Auto-save ใบเสนอราคา (เช็ควันที่) =====
+        const QT_AUTOSAVE_KEY = 'quotation_autosave';
+
+        function getQuotationFormData() {
+            const rows = [];
+            document.querySelectorAll('#qtTableBody tr').forEach(tr => {
+                rows.push({
+                    name: tr.querySelector('.qt-name').value,
+                    qty: tr.querySelector('.qt-qty').value,
+                    price: tr.querySelector('.qt-price').value
+                });
+            });
+            return {
+                page: document.getElementById('quotationPage').value,
+                docType: document.getElementById('quotationDocType').value,
+                customerName: document.getElementById('qtCustomerName').value,
+                customerAddress: document.getElementById('qtCustomerAddress').value,
+                customerPhone: document.getElementById('qtCustomerPhone').value,
+                date: document.getElementById('qtDate').value,
+                rows: rows,
+                discount: document.getElementById('qtDiscount').value,
+                notes: document.getElementById('qtNotes') ? document.getElementById('qtNotes').value : ''
+            };
+        }
+
+        let qtAutoSaveTimer = null;
+        function saveQuotationForm() {
+            clearTimeout(qtAutoSaveTimer);
+            qtAutoSaveTimer = setTimeout(() => {
+                try {
+                    const payload = {
+                        timestamp: Date.now(),
+                        data: getQuotationFormData()
+                    };
+                    localStorage.setItem(QT_AUTOSAVE_KEY, JSON.stringify(payload));
+                    showQtAutoSaveStatus("💾 บันทึกร่างอัตโนมัติแล้ว");
+                } catch (e) {
+                    console.error('QT auto-save error:', e);
+                }
+            }, 800);
+        }
+
+        function loadQuotationForm() {
+            try {
+                const raw = localStorage.getItem(QT_AUTOSAVE_KEY);
+                if (!raw) return;
+                const payload = JSON.parse(raw);
+                
+                // เช็ควันที่: ถ้าข้ามวัน → ลบทิ้ง
+                const savedDate = getDateKey(payload.timestamp);
+                const todayDate = getDateKey();
+                if (savedDate !== todayDate) {
+                    localStorage.removeItem(QT_AUTOSAVE_KEY);
+                    return;
+                }
+                
+                const data = payload.data;
+                if (!data) return;
+
+                // คืนค่า
+                if (data.page) {
+                    document.getElementById('quotationPage').value = data.page;
+                    applyQuotationTheme();
+                }
+                if (data.docType) {
+                    document.getElementById('quotationDocType').value = data.docType;
+                    applyDocumentType();
+                }
+                document.getElementById('qtCustomerName').value = data.customerName || '';
+                document.getElementById('qtCustomerAddress').value = data.customerAddress || '';
+                document.getElementById('qtCustomerPhone').value = data.customerPhone || '';
+                if (data.date) {
+                    document.getElementById('qtDate').value = data.date;
+                    formatDate(document.getElementById('qtDate'), 'dispQtDate');
+                }
+                document.getElementById('qtDiscount').value = data.discount || '0';
+                if (document.getElementById('qtNotes')) {
+                    document.getElementById('qtNotes').value = data.notes || '';
+                }
+                
+                // คืนแถว
+                document.getElementById('qtTableBody').innerHTML = '';
+                if (data.rows && data.rows.length > 0) {
+                    data.rows.forEach(row => addQtRow(row.name, row.qty, row.price));
+                } else {
+                    // เพิ่มแถวว่างเริ่มต้น
+                    addQtRow();
+                }
+                updateQtTotals();
+                showQtAutoSaveStatus("✨ โหลดข้อมูลที่กรอกค้างไว้กลับมาแล้ว");
+            } catch (e) {
+                console.error('QT auto-load error:', e);
+            }
+        }
+
+        function clearQuotationAutoSave() {
+            localStorage.removeItem(QT_AUTOSAVE_KEY);
+        }
+
+        function clearQuotationForm() {
+            if (!confirm("⚠️ ต้องการล้างฟอร์มทั้งหมดใช่ไหม?\n(ข้อมูลที่กรอกไว้จะหาย)")) return;
+            
+            document.getElementById('qtCustomerName').value = '';
+            document.getElementById('qtCustomerAddress').value = '';
+            document.getElementById('qtCustomerPhone').value = '';
+            document.getElementById('qtDiscount').value = '0';
+            if (document.getElementById('qtNotes')) {
+                document.getElementById('qtNotes').value = '';
+            }
+            
+            // ล้างแถว แล้วเพิ่มแถวเปล่า 4 แถว
+            document.getElementById('qtTableBody').innerHTML = '';
+            addQtRow(); addQtRow(); addQtRow(); addQtRow();
+            
+            // เซ็ตวันที่เป็นวันนี้
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const qtDateInput = document.getElementById('qtDate');
+            qtDateInput.value = `${yyyy}-${mm}-${dd}`;
+            formatDate(qtDateInput, 'dispQtDate');
+            
+            updateQtTotals();
+            clearQuotationAutoSave();
+            clearQtAttachments();
+            showQtAutoSaveStatus("🗑️ ล้างฟอร์มเรียบร้อย");
+        }
+
+        let qtStatusTimer = null;
+        function showQtAutoSaveStatus(message) {
+            const el = document.getElementById('qtAutoSaveStatus');
+            if (!el) return;
+            el.textContent = message;
+            el.style.opacity = '1';
+            clearTimeout(qtStatusTimer);
+            qtStatusTimer = setTimeout(() => {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(() => { el.textContent = ''; el.style.opacity = '1'; el.style.transition = ''; }, 500);
+            }, 2000);
+        }
+
+        // ===== รูปแนบในใบเสนอราคา =====
+        const qtAttachData = { 1: null, 2: null, 3: null }; // เก็บ dataURL (1,2 = รูปป้าย, 3 = บัญชี)
+
+        function triggerQtAttach(num) {
+            // ถ้ามีรูปแล้ว → ไม่ต้อง trigger (จะกดปุ่ม X แทน)
+            if (qtAttachData[num]) return;
+            document.getElementById('qtAttachInput' + num).click();
+        }
+
+        function handleQtAttach(input, num) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                qtAttachData[num] = e.target.result;
+                renderQtAttach(num);
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        }
+
+        function renderQtAttach(num) {
+            const slot = document.getElementById('qtAttach' + num);
+            if (!slot) return;
+            if (qtAttachData[num]) {
+                slot.innerHTML = `
+                    <img class="preview" src="${qtAttachData[num]}" alt="รูปแนบ">
+                    <button type="button" class="btn-remove-attach" data-no-capture="true" onclick="removeQtAttach(${num})">✕</button>
+                `;
+                slot.onclick = null;
+            } else {
+                slot.innerHTML = `
+                    <input type="file" id="qtAttachInput${num}" accept="image/*" style="display:none" onchange="handleQtAttach(this, ${num})">
+                    <div class="placeholder">📷<br>แตะเพื่อแนบรูป</div>
+                `;
+                slot.onclick = () => triggerQtAttach(num);
+            }
+        }
+
+        function removeQtAttach(num) {
+            qtAttachData[num] = null;
+            renderQtAttach(num);
+        }
+
+        function clearQtAttachments() {
+            qtAttachData[1] = null;
+            qtAttachData[2] = null;
+            qtAttachData[3] = null;
+            renderQtAttach(1);
+            renderQtAttach(2);
+            renderQtAttach(3);
+        }
+
+        // ============================================================
+        // ค้นหาใบเก่าเพื่อแก้ไข
+        // ============================================================
+        function searchQuotation() {
+            const searchInput = document.getElementById('qtSearchInput').value.trim().toUpperCase();
+            const statusEl = document.getElementById('qtSearchStatus');
+            const docType = document.getElementById('quotationDocType').value;
+
+            if (!searchInput) {
+                statusEl.textContent = '⚠️ กรุณาพิมพ์เลขใบก่อน';
+                statusEl.style.color = '#dc2626';
+                return;
+            }
+
+            statusEl.textContent = '⏳ กำลังค้นหา...';
+            statusEl.style.color = '#6b7280';
+
             fetch(API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({
-                    action: "getGraphicRunNo",
-                    salesName: salesName,
-                    receiver: receiver
+                    action: "loadQuotation",
+                    runNo: searchInput
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "success") {
+                    statusEl.textContent = '❌ ไม่พบใบ ' + searchInput;
+                    statusEl.style.color = '#dc2626';
+                    return;
+                }
+
+                // โหลดข้อมูลกลับเข้าฟอร์ม
+                populateQuotationForm(data);
+
+                // เช็คว่ากำลังทำอะไร
+                const isQTSearch = searchInput.startsWith('QT');
+                const isInvoiceOrReceipt = (docType === 'invoice' || docType === 'receipt');
+
+                if (isQTSearch && isInvoiceOrReceipt) {
+                    // โหมด: สร้าง IN/RC จาก QT → เซ็ต ref เท่านั้น ไม่ต้อง edit mode
+                    qtRefNo = searchInput;
+                    setQtRefDisplay(searchInput);
+                    statusEl.textContent = `✅ โหลดข้อมูลจาก ${searchInput} แล้ว`;
+                    statusEl.style.color = '#16a34a';
+                } else {
+                    // โหมด: แก้ไขใบเดิม
+                    setQuotationEditMode(searchInput, data.rowIndex, data.sheetName);
+                    statusEl.textContent = '✅ โหลดข้อมูลแล้ว';
+                    statusEl.style.color = '#16a34a';
+                }
+
+                document.getElementById('quotationBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(error => {
+                statusEl.textContent = '❌ เกิดข้อผิดพลาด: ' + error.message;
+                statusEl.style.color = '#dc2626';
+            });
+        }
+
+        function setQtRefDisplay(refNo) {
+            qtRefNo = refNo;
+            const refRow = document.getElementById('qtRefRow');
+            const refDisplay = document.getElementById('qtRefDisplay');
+            if (refRow && refDisplay) {
+                refDisplay.textContent = refNo;
+                refRow.style.display = 'flex';
+            }
+        }
+
+        function clearQtRefDisplay() {
+            qtRefNo = null;
+            const refRow = document.getElementById('qtRefRow');
+            if (refRow) refRow.style.display = 'none';
+            const refDisplay = document.getElementById('qtRefDisplay');
+            if (refDisplay) refDisplay.textContent = '';
+        }
+
+        function populateQuotationForm(data) {
+            // เพจ + theme
+            if (data.pageKey) {
+                document.getElementById('quotationPage').value = data.pageKey;
+                applyQuotationTheme();
+            }
+            // ประเภทเอกสาร
+            if (data.docType) {
+                document.getElementById('quotationDocType').value = data.docType;
+                applyDocumentType();
+            }
+            // ข้อมูลลูกค้า
+            document.getElementById('qtCustomerName').value = data.customerName || '';
+            document.getElementById('qtCustomerAddress').value = data.customerAddress || '';
+            document.getElementById('qtCustomerPhone').value = data.customerPhone || '';
+            // วันที่
+            if (data.date) {
+                document.getElementById('qtDate').value = data.date;
+                formatDate(document.getElementById('qtDate'), 'dispQtDate');
+            }
+            // รายการ
+            document.getElementById('qtTableBody').innerHTML = '';
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(row => addQtRow(row.name, row.qty, row.price));
+            } else {
+                addQtRow(); addQtRow(); addQtRow(); addQtRow();
+            }
+            // ส่วนลด
+            document.getElementById('qtDiscount').value = data.discount || '0';
+            // หมายเหตุ
+            if (document.getElementById('qtNotes')) {
+                document.getElementById('qtNotes').value = data.notes || '';
+            }
+            updateQtTotals();
+        }
+
+        function setQuotationEditMode(runNo, rowIndex, sheetName) {
+            qtCurrentRunNo = runNo;
+            qtCurrentRowIndex = rowIndex;
+            qtCurrentSheetName = sheetName;
+
+            // แสดง Edit Mode Bar
+            const bar = document.getElementById('qtEditModeBar');
+            bar.style.display = 'flex';
+            document.getElementById('qtEditModeRunNo').textContent = runNo;
+
+            // เปลี่ยนปุ่ม
+            const saveBtn = document.getElementById('qtSaveBtn');
+            saveBtn.innerHTML = '✏️ แก้ไขและส่งใหม่';
+            saveBtn.style.backgroundColor = '#d97706';
+
+            const newBtn = document.getElementById('qtNewBtn');
+            newBtn.style.display = 'inline-block';
+
+            // แสดง Run No. บนใบ
+            document.getElementById('qtRunNoDisplay').textContent = runNo;
+        }
+
+        function exitEditMode() {
+            if (!confirm('⚠️ ออกจากโหมดแก้ไขใช่ไหม?\n(ข้อมูลที่แก้ไขจะหาย)')) return;
+            clearQuotationEditState();
+            clearQuotationForm();
+        }
+
+        function clearQuotationEditState() {
+            qtCurrentRunNo = null;
+            qtCurrentRowIndex = null;
+            qtCurrentSheetName = null;
+            clearQtRefDisplay();
+
+            document.getElementById('qtEditModeBar').style.display = 'none';
+            document.getElementById('qtNewBtn').style.display = 'none';
+            document.getElementById('qtSearchInput').value = '';
+            document.getElementById('qtSearchStatus').textContent = '';
+
+            const saveBtn = document.getElementById('qtSaveBtn');
+            saveBtn.innerHTML = '💾 บันทึกใบเสนอราคา';
+            saveBtn.style.backgroundColor = '';
+
+            // reset ปุ่มตาม docType ปัจจุบัน
+            applyDocumentType();
+        }
+
+        function startNewQuotation() {
+            clearQuotationEditState();
+            clearQuotationForm();
+        }
+        function saveQuotation() {
+            const btnSave = document.getElementById('qtSaveBtn');
+            const page = document.getElementById('quotationPage').value;
+            const docType = document.getElementById('quotationDocType').value;
+            const docConfig = QT_DOC_TYPES[docType];
+            const originalBtnText = btnSave.innerHTML;
+            btnSave.disabled = true;
+
+            const formData = getQuotationFormData();
+            const subtotal = parseNumber(document.getElementById('qtSubtotal').textContent);
+            const discount = parseNumber(document.getElementById('qtDiscount').value);
+            const grandTotal = parseNumber(document.getElementById('qtGrandTotal').textContent);
+            const itemsJson = JSON.stringify(formData.rows.filter(r => r.name || r.qty || r.price));
+            const customerName = document.getElementById('qtCustomerName').value || 'unnamed';
+            const now = new Date();
+            const d = String(now.getDate()).padStart(2, '0');
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = now.getFullYear();
+            const timeStamp = now.getTime();
+
+            // ===== Edit mode: ใช้เลขเดิม overwrite =====
+            if (qtCurrentRunNo) {
+                btnSave.innerHTML = "📸 กำลังสร้างรูปใบเสนอราคา...";
+                document.getElementById('qtRunNoDisplay').textContent = qtCurrentRunNo;
+
+                captureQuotationElement().then(imgData => {
+                    btnSave.innerHTML = "☁️ กำลังอัปโหลดรูปใหม่...";
+                    const fileName = `Quotation_${qtCurrentRunNo.replace('/', '-')}_${customerName}_${y}${m}${d}_${timeStamp}`;
+
+                    return fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "overwriteQuotation",
+                            base64: imgData.split(',')[1],
+                            fileName: fileName,
+                            rowIndex: qtCurrentRowIndex,
+                            runNo: qtCurrentRunNo,
+                            sheetName: qtCurrentSheetName,
+                            page: QT_THEMES[page] ? QT_THEMES[page].shopName : page,
+                            customerName: formData.customerName,
+                            customerAddress: formData.customerAddress,
+                            customerPhone: formData.customerPhone,
+                            items: itemsJson,
+                            subtotal: subtotal,
+                            discount: discount,
+                            grandTotal: grandTotal,
+                            notes: formData.notes || ""
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(saveData => {
+                        if (saveData.status !== "success") throw new Error(saveData.message || "ไม่ทราบสาเหตุ");
+                        btnSave.innerHTML = "💾 กำลังเตรียมไฟล์ PNG + PDF...";
+                        return deliverImageAndPdfToUser(imgData, fileName, `${docConfig.titleTh} ${qtCurrentRunNo} (แก้ไขแล้ว)`);
+                    });
+                })
+                .catch(error => {
+                    alert("❌ เกิดข้อผิดพลาด: " + error.message);
+                })
+                .finally(() => {
+                    btnSave.innerHTML = originalBtnText;
+                    btnSave.disabled = false;
+                });
+                return;
+            }
+
+            // ===== Normal mode: ขอเลขใหม่ =====
+            btnSave.innerHTML = "⏳ กำลังขอเลขเอกสาร...";
+
+            fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({
+                    action: docConfig.sheetAction,
+                    page: page,
+                    docType: docType
                 })
             })
             .then(response => response.json())
@@ -1575,37 +2572,33 @@
                 const runNo = data.runNo;
                 const rowIndex = data.rowIndex;
 
-                runNoInput.value = runNo;
-                runNoInput.style.color = "black";
-                runNoInput.style.fontWeight = "bold";
-                runNoInput.style.fontSize = "18px";
+                document.getElementById('qtRunNoDisplay').textContent = runNo;
+                btnSave.innerHTML = "📸 กำลังสร้างรูปใบเสนอราคา...";
 
-                btnSave.innerHTML = "📸 กำลังสร้างรูปใบงาน...";
-
-                return captureGraphicElement().then(imgData => {
+                return captureQuotationElement().then(imgData => {
                     btnSave.innerHTML = "☁️ กำลังอัปโหลดรูป...";
-                    const now = new Date();
-                    const d = String(now.getDate()).padStart(2, '0');
-                    const m = String(now.getMonth() + 1).padStart(2, '0');
-                    const y = now.getFullYear();
-                    const timeStamp = now.getTime();
-                    const fileName = `Graphic_${salesName}_${y}${m}${d}_${timeStamp}`;
+                    const fileName = `Quotation_${runNo.replace('/', '-')}_${customerName}_${y}${m}${d}_${timeStamp}`;
 
                     return fetch(API_URL, {
                         method: "POST",
                         headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify({
-                            action: "saveGraphicQueue",
+                            action: docConfig.saveAction,
                             base64: imgData.split(',')[1],
                             fileName: fileName,
                             rowIndex: rowIndex,
                             runNo: runNo,
-                            salesName: salesName,
-                            receiver: receiver,
-                            page: page,
-                            worktype: worktypeStr,
-                            size: size,
-                            details: details
+                            docType: docType,
+                            qtRef: qtRefNo || '',
+                            page: QT_THEMES[page] ? QT_THEMES[page].shopName : page,
+                            customerName: formData.customerName,
+                            customerAddress: formData.customerAddress,
+                            customerPhone: formData.customerPhone,
+                            items: itemsJson,
+                            subtotal: subtotal,
+                            discount: discount,
+                            grandTotal: grandTotal,
+                            notes: formData.notes || ""
                         })
                     })
                     .then(response => response.json())
@@ -1613,9 +2606,8 @@
                         if (saveData.status !== "success") {
                             throw new Error("บันทึกรูปไม่สำเร็จ: " + (saveData.message || "ไม่ทราบสาเหตุ"));
                         }
-                        btnSave.innerHTML = "💾 กำลังเตรียมรูป...";
-                        const downloadFileName = `Graphic_${runNo.replace('/', '-')}_${salesName}.png`;
-                        return deliverImageToUser(imgData, downloadFileName, `ใบคิวกราฟิก ${runNo}`);
+                        btnSave.innerHTML = "💾 กำลังเตรียมไฟล์ PNG + PDF...";
+                        return deliverImageAndPdfToUser(imgData, fileName, `${docConfig.titleTh} ${runNo}`);
                     });
                 });
             })
@@ -1626,78 +2618,106 @@
             });
         }
 
-        // แคปรูปของใบคิวกราฟิก (auto-height ตามเนื้อหา)
-        function captureGraphicElement() {
-            const element = document.getElementById('graphicBox');
-            const height = element.offsetHeight;
+        // แคปรูปใบเสนอราคา (auto-height)
+        function captureQuotationElement() {
+            const element = document.getElementById('quotationBox');
             return html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: "#ffffff",
                 windowWidth: 800,
                 onclone: function (clonedDoc) {
-                    const clonedBox = clonedDoc.getElementById('graphicBox');
+                    const clonedBox = clonedDoc.getElementById('quotationBox');
                     clonedBox.style.width = '800px';
                     clonedBox.style.margin = '0';
 
-                    const placeholders = clonedDoc.querySelectorAll('.canvas-placeholder');
-                    placeholders.forEach(p => p.style.display = 'none');
-
+                    // ซ่อน element ที่มี data-no-capture
                     const noCaptureEls = clonedDoc.querySelectorAll('[data-no-capture="true"]');
                     noCaptureEls.forEach(el => el.remove());
 
-                    // จัด grid ใหม่สำหรับรูป
-                    const galleries = clonedDoc.querySelectorAll('#graphicMode .image-gallery, #graphicBox .image-gallery');
-                    galleries.forEach(gallery => {
-                        const realSlots = gallery.querySelectorAll('.img-slot').length;
-                        if (realSlots === 0) {
-                            gallery.removeAttribute('data-count');
-                        } else if (realSlots === 1) {
-                            gallery.style.gridTemplateColumns = '1fr';
-                            gallery.style.gridTemplateRows = '1fr';
-                        } else if (realSlots === 2) {
-                            gallery.style.gridTemplateColumns = '1fr 1fr';
-                            gallery.style.gridTemplateRows = '1fr';
-                        } else if (realSlots === 3) {
-                            gallery.style.gridTemplateColumns = '1fr 1fr';
-                            gallery.style.gridTemplateRows = '1fr 1fr';
-                            const thirdSlot = gallery.querySelectorAll('.img-slot')[2];
-                            if (thirdSlot) thirdSlot.style.gridColumn = '1 / span 2';
-                        } else if (realSlots === 4) {
-                            gallery.style.gridTemplateColumns = '1fr 1fr';
-                            gallery.style.gridTemplateRows = '1fr 1fr';
-                        } else if (realSlots <= 6) {
-                            gallery.style.gridTemplateColumns = 'repeat(3, 1fr)';
-                            gallery.style.gridTemplateRows = 'repeat(2, 1fr)';
-                        } else {
-                            gallery.style.gridTemplateColumns = 'repeat(4, 1fr)';
-                            gallery.style.gridTemplateRows = 'repeat(2, 1fr)';
+                    // แทนที่ช่องแนบรูปให้แสดงรูปจริงตอนแคป (ซ่อน placeholder ที่ว่างเปล่า)
+                    const attachArea = clonedDoc.getElementById('qtAttachArea');
+                    if (attachArea) {
+                        const slots = attachArea.querySelectorAll('.qt-attachment-slot');
+                        let hasAnyImage = false;
+                        slots.forEach((slot, i) => {
+                            const num = i + 1;
+                            if (qtAttachData[num]) {
+                                hasAnyImage = true;
+                                // แทนที่ด้วย img tag
+                                slot.innerHTML = `<img style="width:100%;height:100%;object-fit:contain;" src="${qtAttachData[num]}">`;
+                                slot.style.border = '1px solid #e5e7eb';
+                                slot.style.cursor = 'default';
+                            } else {
+                                // ซ่อน slot ที่ว่าง
+                                slot.style.display = 'none';
+                            }
+                        });
+                        // ถ้าไม่มีรูปเลย ซ่อน section ทั้งหมด
+                        if (!hasAnyImage) {
+                            const label = attachArea.previousElementSibling;
+                            if (label) label.style.display = 'none';
+                            attachArea.style.display = 'none';
                         }
-                    });
+                    }
 
-                    // แปลง textarea เป็น div
-                    const textareas = clonedDoc.querySelectorAll('#graphicBox textarea');
-                    textareas.forEach(textarea => {
-                        const div = clonedDoc.createElement('div');
-                        div.innerHTML = (textarea.value || '').replace(/\n/g, '<br>');
-                        const computed = window.getComputedStyle(textarea);
-                        div.style.width = '100%';
-                        div.style.minHeight = textarea.offsetHeight + 'px';
-                        div.style.padding = computed.padding;
-                        div.style.fontFamily = computed.fontFamily;
-                        div.style.fontSize = computed.fontSize;
-                        div.style.lineHeight = computed.lineHeight;
-                        div.style.border = computed.border;
-                        div.style.borderRadius = computed.borderRadius;
-                        div.style.boxSizing = 'border-box';
-                        div.style.wordWrap = 'break-word';
-                        div.style.whiteSpace = 'pre-wrap';
-                        textarea.parentNode.replaceChild(div, textarea);
+                    // แทนที่ช่องแนบรูปเลขบัญชี/QR (slot 3) - คอลัมน์เดี่ยว
+                    const bankSection = clonedDoc.getElementById('qtBankSection');
+                    if (bankSection) {
+                        const bankSlot = bankSection.querySelector('.qt-attachment-slot');
+                        if (qtAttachData[3]) {
+                            if (bankSlot) {
+                                bankSlot.innerHTML = `<img style="width:100%;height:100%;object-fit:contain;" src="${qtAttachData[3]}">`;
+                                bankSlot.style.border = '1px solid #e5e7eb';
+                                bankSlot.style.borderTop = 'none';
+                                bankSlot.style.cursor = 'default';
+                            }
+                        } else {
+                            // ไม่มีรูปบัญชี ซ่อนทั้งคอลัมน์
+                            bankSection.style.display = 'none';
+                        }
+                    }
+
+                    // ซ่อนหมายเหตุถ้าว่าง
+                    const notesSection = clonedDoc.getElementById('qtNotesSection');
+                    const notesEl = clonedDoc.getElementById('qtNotes');
+                    if (notesSection && notesEl) {
+                        const notesText = (notesEl.value || '').trim();
+                        if (!notesText) {
+                            notesSection.style.display = 'none';
+                        } else {
+                            // แทนที่ textarea ด้วย div แสดง text
+                            const notesDiv = clonedDoc.createElement('div');
+                            notesDiv.style.cssText = 'font-family: Sarabun, sans-serif; font-size: 14px; line-height: 1.5; padding: 8px 10px; white-space: pre-wrap;';
+                            notesDiv.textContent = notesText;
+                            notesEl.parentNode.replaceChild(notesDiv, notesEl);
+                        }
+                    }
+                    const inputs = clonedDoc.querySelectorAll('#quotationBox input[type="text"]');
+                    inputs.forEach(input => {
+                        const span = clonedDoc.createElement('span');
+                        span.textContent = input.value || '';
+                        const computed = window.getComputedStyle(input);
+                        span.style.fontFamily = computed.fontFamily;
+                        span.style.fontSize = computed.fontSize;
+                        span.style.fontWeight = computed.fontWeight;
+                        span.style.padding = computed.padding;
+                        span.style.color = computed.color;
+                        // คงการจัดข้อความ
+                        if (input.classList.contains('text-right')) span.style.textAlign = 'right';
+                        if (input.classList.contains('text-center')) span.style.textAlign = 'center';
+                        span.style.display = 'inline-block';
+                        span.style.width = '100%';
+                        span.style.minHeight = '20px';
+                        if (input.classList.contains('qt-discount-input')) {
+                            span.style.textAlign = 'right';
+                            span.style.fontWeight = '700';
+                        }
+                        input.parentNode.replaceChild(span, input);
                     });
                 }
             }).then(canvas => canvas.toDataURL('image/png'));
         }
-
         // ============================================================
         // ส่งรูปให้ user (Web Share API + Modal fallback)
         // ============================================================
@@ -1737,6 +2757,107 @@
             showResultModal(imgDataUrl, title);
         }
 
+        // ============================================================
+        // สร้าง PDF จากรูป (สำหรับใบเสนอราคา) — ใช้ jsPDF
+        // ============================================================
+        async function generatePdfBlob(imgDataUrl) {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                throw new Error('jsPDF library ไม่พร้อมใช้งาน');
+            }
+            const { jsPDF } = window.jspdf;
+
+            // โหลดรูปเพื่อหาขนาดจริง
+            const img = new Image();
+            img.src = imgDataUrl;
+            await new Promise((resolve, reject) => {
+                if (img.complete && img.naturalWidth) return resolve();
+                img.onload = () => resolve();
+                img.onerror = () => reject(new Error('โหลดรูปไม่สำเร็จ'));
+            });
+
+            // สร้าง PDF A4 แนวตั้ง (595 x 842 pt)
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+            const pageW = pdf.internal.pageSize.getWidth();
+            const pageH = pdf.internal.pageSize.getHeight();
+
+            // คำนวณขนาดให้พอดีหน้า (รักษา aspect ratio)
+            const imgRatio = img.naturalHeight / img.naturalWidth;
+            let displayW = pageW;
+            let displayH = pageW * imgRatio;
+            if (displayH > pageH) {
+                displayH = pageH;
+                displayW = pageH / imgRatio;
+            }
+            const x = (pageW - displayW) / 2;
+            const y = (pageH - displayH) / 2;
+
+            pdf.addImage(imgDataUrl, 'PNG', x, y, displayW, displayH, undefined, 'FAST');
+            return pdf.output('blob');
+        }
+
+        // ============================================================
+        // ส่งทั้ง PNG + PDF ให้ user (สำหรับใบเสนอราคา)
+        // ============================================================
+        async function deliverImageAndPdfToUser(imgDataUrl, fileNameBase, title) {
+            const pngBlob = dataURLtoBlob(imgDataUrl);
+            let pdfBlob = null;
+            try {
+                pdfBlob = await generatePdfBlob(imgDataUrl);
+            } catch (e) {
+                console.error('สร้าง PDF ไม่สำเร็จ:', e);
+                // Fallback: ส่งแค่ PNG เหมือนเดิม
+                return deliverImageToUser(imgDataUrl, fileNameBase + '.png', title);
+            }
+
+            const pngFile = new File([pngBlob], fileNameBase + '.png', { type: 'image/png' });
+            const pdfFile = new File([pdfBlob], fileNameBase + '.pdf', { type: 'application/pdf' });
+
+            // เก็บ blob ไว้สำหรับปุ่ม "แชร์อีกครั้ง"
+            lastImageBlob = pngBlob;
+            lastImageFileName = fileNameBase + '.png';
+
+            // มือถือ: Web Share API หลายไฟล์
+            if (navigator.canShare && navigator.canShare({ files: [pngFile, pdfFile] })) {
+                try {
+                    await navigator.share({ files: [pngFile, pdfFile], title: title });
+                    showResultModal(imgDataUrl, title);
+                    return;
+                } catch (err) {
+                    console.log('Share cancelled or failed:', err);
+                }
+            }
+
+            // คอม/fallback: ดาวน์โหลด 2 ไฟล์
+            try {
+                // PNG
+                const pngUrl = URL.createObjectURL(pngBlob);
+                const pngLink = document.createElement('a');
+                pngLink.href = pngUrl;
+                pngLink.download = fileNameBase + '.png';
+                document.body.appendChild(pngLink);
+                pngLink.click();
+                document.body.removeChild(pngLink);
+                setTimeout(() => URL.revokeObjectURL(pngUrl), 1000);
+
+                // หน่วง 300ms กัน browser block (บางบราวเซอร์ไม่ยอมให้ download หลายไฟล์ติดๆ)
+                await new Promise(r => setTimeout(r, 300));
+
+                // PDF
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                const pdfLink = document.createElement('a');
+                pdfLink.href = pdfUrl;
+                pdfLink.download = fileNameBase + '.pdf';
+                document.body.appendChild(pdfLink);
+                pdfLink.click();
+                document.body.removeChild(pdfLink);
+                setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
+            } catch (err) {
+                console.log('Download failed:', err);
+            }
+
+            showResultModal(imgDataUrl, title);
+        }
+
         function showResultModal(imgDataUrl, title) {
             document.getElementById('resultModalImg').src = imgDataUrl;
             document.getElementById('resultModalTitle').textContent = `✅ ${title}`;
@@ -1762,6 +2883,7 @@
         function closeResultModal() {
             // ล้าง auto-save เพราะบันทึกสำเร็จแล้ว → พร้อมรับใบใหม่
             try { clearJobOrderAutoSave(); } catch(e) {}
+            try { clearQuotationAutoSave(); } catch(e) {}
             document.body.style.overflow = '';
             window.location.reload();
         }
@@ -1794,12 +2916,33 @@
                 formatDate(recvDateInput, 'dispRecvDate');
             }
 
-            // ตั้งค่าวันที่อัตโนมัติสำหรับใบคิวกราฟิก
-            const graphicDateInput = document.getElementById('graphicDate');
-            if (graphicDateInput) {
-                graphicDateInput.value = `${yyyy}-${mm}-${dd}`;
-                formatDate(graphicDateInput, 'dispGraphicDate');
+            // ตั้งค่าวันที่อัตโนมัติสำหรับใบเสนอราคา
+            const qtDateInput = document.getElementById('qtDate');
+            if (qtDateInput) {
+                qtDateInput.value = `${yyyy}-${mm}-${dd}`;
+                formatDate(qtDateInput, 'dispQtDate');
             }
+            // อัปเดตวันที่ในกรอบลายเซ็น
+            const todayThai = `${dd}/${mm}/${yyyy}`;
+            const signDateLeft = document.getElementById('qtSignDateLeft');
+            const signDateRight = document.getElementById('qtSignDateRight');
+            if (signDateLeft) signDateLeft.textContent = todayThai;
+            if (signDateRight) signDateRight.textContent = todayThai;
+            // เริ่มต้นเพิ่มแถว 4 แถว
+            if (document.getElementById('qtTableBody')) {
+                for (let i = 0; i < 4; i++) addQtRow();
+                updateQtTotals();
+            }
+            // โหลด autosave ของใบเสนอราคา (จะ override แถวเริ่มต้นถ้ามีข้อมูล)
+            setTimeout(loadQuotationForm, 150);
+
+            // ผูก auto-save ของช่องลูกค้าใบเสนอราคา
+            ['qtCustomerName', 'qtCustomerAddress', 'qtCustomerPhone', 'qtNotes'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', saveQuotationForm);
+            });
+            const qtDateEl = document.getElementById('qtDate');
+            if (qtDateEl) qtDateEl.addEventListener('change', saveQuotationForm);
 
             // เคลียร์สี error ของช่องเบอร์โทรตอน user เริ่มพิมพ์
             const phoneInput = document.getElementById('senderPhone');
