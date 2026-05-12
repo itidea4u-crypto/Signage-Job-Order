@@ -47,7 +47,7 @@
         }
 
         /* ===== ใบสั่งงาน (เดิม) ===== */
-        .canva-box { width: 800px; height: 800px; background-color: white; border: 3px solid #000; display: flex; flex-direction: column; box-sizing: border-box; position: relative; margin: 0 auto; }
+        .canva-box { width: 1000px; height: 1200px; background-color: white; border: 3px solid #000; display: flex; flex-direction: column; box-sizing: border-box; position: relative; margin: 0 auto; }
         .header-row { display: grid; grid-template-columns: 2fr 2fr 1.2fr; border-bottom: 2px solid #000; }
         .header-cell { border-right: 2px solid #000; padding: 6px 10px; display: flex; align-items: center; font-size: 18px; font-weight: 600; }
         .header-cell:last-child { border-right: none; }
@@ -916,12 +916,12 @@
                         <label class="checkbox-group"><input type="checkbox"> สติ๊กเกอร์</label>
                     </div>
                     <div class="bottom-row" style="gap: 4px;">
-                        <span>โครงเหล็ก สี:</span> <input type="text" class="inline-input" style="flex: none; width: 90px;">
-                        <span>รหัสสี:</span> <input type="text" class="inline-input" style="flex: none; width: 80px;">
+                        <span>โครงเหล็ก สี:</span> <input type="text" class="inline-input" style="flex: none; width: 65px;">
+                        <span>รหัสสี:</span> <input type="text" class="inline-input" style="flex: none; width: 160px;">
                     </div>
                     <div class="bottom-row" style="gap: 4px;">
-                        <span>ขอบซิงค์ สี:</span> <input type="text" class="inline-input" style="flex: none; width: 90px;">
-                        <span>รหัสสี:</span> <input type="text" class="inline-input" style="flex: none; width: 80px;">
+                        <span>ขอบซิงค์ สี:</span> <input type="text" class="inline-input" style="flex: none; width: 65px;">
+                        <span>รหัสสี:</span> <input type="text" class="inline-input" style="flex: none; width: 160px;">
                     </div>
                     <div class="bottom-row">
                         <span>สายไฟยาว</span> <input type="text" class="inline-input" style="width: 60px; flex: none; text-align: center;"> <span>ม.</span>
@@ -1771,7 +1771,7 @@
 
                 btnSave.innerHTML = "📸 กำลังสร้างรูปใบงาน...";
 
-                return captureElement('jobOrderBox', 800, 800).then(imgData => {
+                return captureElement('jobOrderBox', 1000, 1200).then(imgData => {
                     btnSave.innerHTML = "☁️ กำลังอัปโหลดรูป...";
                     const now = new Date();
                     const d = String(now.getDate()).padStart(2, '0');
