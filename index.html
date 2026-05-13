@@ -1140,6 +1140,27 @@
                         <div class="qt-summary-row" style="justify-content: flex-end;">
                             <span class="baht-text" id="qtGrandTotalText">(ศูนย์บาทถ้วน)</span>
                         </div>
+
+                        <!-- ===== Billing Plan (แสดงเฉพาะใบแจ้งหนี้) ===== -->
+                        <div id="qtBillingSection" style="display: none;">
+                            <div class="qt-summary-row divider" style="padding-top: 6px;">
+                                <span class="label">เงื่อนไขเรียกเก็บ</span>
+                                <select id="qtBillingType" onchange="onQtBillingTypeChange()" style="padding: 3px 6px; font-family: 'Sarabun', sans-serif; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; outline: none; max-width: 60%;">
+                                    <option value="deposit_50">มัดจำ 50%</option>
+                                    <option value="final_50">งวดที่ 2 จำนวน 50%</option>
+                                    <option value="full">ชำระเต็มจำนวน</option>
+                                    <option value="custom">กำหนดเอง</option>
+                                </select>
+                            </div>
+                            <div class="qt-summary-row">
+                                <span class="label">ยอดเรียกเก็บครั้งนี้</span>
+                                <input type="text" id="qtBillingAmount" class="qt-discount-input" value="0" inputmode="decimal" readonly oninput="onQtBillingAmountInput()">
+                            </div>
+                            <div class="qt-summary-row">
+                                <span class="label">ยอดคงเหลือ</span>
+                                <span class="value" id="qtRemainingAmount">0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1204,7 +1225,7 @@
         let qtCurrentRunNo = null;
         let qtCurrentRowIndex = null;
         let qtCurrentSheetName = null;
-        let qtRefNo = null; // เลข QT ที่อ้างอิง (สำหรับใบ IN/RC)
+        let qtRefNo = null; // เลขเอกสารต้นทาง (QT→IN/RC หรือ IN→RC)
 
         // ============================================================
         // ImageManager: จัดการรูปในแต่ละโหมด (เก็บเป็น array → ลบ/เพิ่มได้)
@@ -1912,6 +1933,7 @@
                 titleTh: 'ใบแจ้งหนี้',
                 titleEn: '/Invoice',
                 showConditions: false,
+                showBillingPlan: true,
                 signLeft: 'ผู้อนุมัติ',
                 signRight: 'ผู้ออกเอกสาร',
                 showLeftSign: true,
@@ -1944,6 +1966,10 @@
             // เงื่อนไข
             const cond = document.getElementById('qtConditions');
             if (cond) cond.style.display = config.showConditions ? '' : 'none';
+
+            // Billing Plan (เฉพาะใบแจ้งหนี้)
+            const billing = document.getElementById('qtBillingSection');
+            if (billing) billing.style.display = config.showBillingPlan ? '' : 'none';
 
             // ลายเซ็น
             const signBoxLeft = document.getElementById('qtSignBoxLeft');
@@ -2086,6 +2112,50 @@
             document.getElementById('qtSubtotal').textContent = formatNumber(subtotal);
             document.getElementById('qtGrandTotal').textContent = formatNumber(grand);
             document.getElementById('qtGrandTotalText').textContent = '(' + numberToThaiBaht(grand) + ')';
+            updateQtBilling(grand);
+            saveQuotationForm();
+        }
+
+        // ===== Billing Plan (ใบแจ้งหนี้): คำนวณยอดเรียกเก็บครั้งนี้ + ยอดคงเหลือ =====
+        function updateQtBilling(grandTotal) {
+            const section = document.getElementById('qtBillingSection');
+            if (!section || section.style.display === 'none') return;
+
+            const typeSel = document.getElementById('qtBillingType');
+            const amountInput = document.getElementById('qtBillingAmount');
+            const remainingEl = document.getElementById('qtRemainingAmount');
+            if (!typeSel || !amountInput || !remainingEl) return;
+
+            const type = typeSel.value;
+            let billing = 0;
+
+            if (type === 'custom') {
+                amountInput.readOnly = false;
+                billing = parseNumber(amountInput.value);
+            } else {
+                amountInput.readOnly = true;
+                if (type === 'deposit_50' || type === 'final_50') {
+                    billing = grandTotal * 0.5;
+                } else {
+                    // full
+                    billing = grandTotal;
+                }
+                amountInput.value = formatNumber(billing);
+            }
+
+            const remaining = Math.max(0, grandTotal - billing);
+            remainingEl.textContent = formatNumber(remaining);
+        }
+
+        function onQtBillingTypeChange() {
+            const grand = parseNumber(document.getElementById('qtGrandTotal').textContent);
+            updateQtBilling(grand);
+            saveQuotationForm();
+        }
+
+        function onQtBillingAmountInput() {
+            const grand = parseNumber(document.getElementById('qtGrandTotal').textContent);
+            updateQtBilling(grand);
             saveQuotationForm();
         }
 
@@ -2148,7 +2218,9 @@
                 date: document.getElementById('qtDate').value,
                 rows: rows,
                 discount: document.getElementById('qtDiscount').value,
-                notes: document.getElementById('qtNotes') ? document.getElementById('qtNotes').value : ''
+                notes: document.getElementById('qtNotes') ? document.getElementById('qtNotes').value : '',
+                billingType: document.getElementById('qtBillingType') ? document.getElementById('qtBillingType').value : 'deposit_50',
+                billingAmount: document.getElementById('qtBillingAmount') ? document.getElementById('qtBillingAmount').value : '0'
             };
         }
 
@@ -2206,6 +2278,13 @@
                 if (document.getElementById('qtNotes')) {
                     document.getElementById('qtNotes').value = data.notes || '';
                 }
+                // คืนค่า billing (เฉพาะ invoice — element อาจถูกซ่อน แต่เซ็ตค่าไว้ก่อน)
+                if (document.getElementById('qtBillingType') && data.billingType) {
+                    document.getElementById('qtBillingType').value = data.billingType;
+                }
+                if (document.getElementById('qtBillingAmount') && data.billingAmount !== undefined && data.billingAmount !== null) {
+                    document.getElementById('qtBillingAmount').value = data.billingAmount;
+                }
                 
                 // คืนแถว
                 document.getElementById('qtTableBody').innerHTML = '';
@@ -2236,6 +2315,11 @@
             if (document.getElementById('qtNotes')) {
                 document.getElementById('qtNotes').value = '';
             }
+            // Reset billing fields กลับ default
+            const billingTypeEl = document.getElementById('qtBillingType');
+            if (billingTypeEl) billingTypeEl.value = 'deposit_50';
+            const billingAmountEl = document.getElementById('qtBillingAmount');
+            if (billingAmountEl) billingAmountEl.value = '0';
             
             // ล้างแถว แล้วเพิ่มแถวเปล่า 4 แถว
             document.getElementById('qtTableBody').innerHTML = '';
@@ -2337,6 +2421,31 @@
                 return;
             }
 
+            // ===== ตัดสินใจ flow ก่อนยิง request (กัน round-trip เปล่าๆ ถ้า reject) =====
+            const sourcePrefix = searchInput.substring(0, 2);
+            const targetPrefixMap = { quotation: 'QT', invoice: 'IN', receipt: 'RC' };
+            const targetPrefix = targetPrefixMap[docType];
+            const docNameMap = {
+                'QT': 'ใบเสนอราคา',
+                'IN': 'ใบแจ้งหนี้',
+                'RC': 'ใบเสร็จรับเงิน'
+            };
+
+            // เคยอนุญาต: edit (source===target), หรือ newFromSource (QT→IN, QT→RC, IN→RC)
+            const isEdit = (sourcePrefix === targetPrefix);
+            const isNewFromSource =
+                (sourcePrefix === 'QT' && (targetPrefix === 'IN' || targetPrefix === 'RC')) ||
+                (sourcePrefix === 'IN' &&  targetPrefix === 'RC');
+
+            if (!isEdit && !isNewFromSource) {
+                // flow ผิดทิศ — เช่น RC→อะไร, IN→QT
+                const srcName = docNameMap[sourcePrefix] || sourcePrefix;
+                const tgtName = docNameMap[targetPrefix] || docType;
+                statusEl.textContent = `❌ ไม่สามารถสร้าง${tgtName} จาก${srcName}ได้`;
+                statusEl.style.color = '#dc2626';
+                return;
+            }
+
             statusEl.textContent = '⏳ กำลังค้นหา...';
             statusEl.style.color = '#6b7280';
 
@@ -2356,21 +2465,23 @@
                     return;
                 }
 
-                // โหลดข้อมูลกลับเข้าฟอร์ม
-                populateQuotationForm(data);
-
-                // เช็คว่ากำลังทำอะไร
-                const isQTSearch = searchInput.startsWith('QT');
-                const isInvoiceOrReceipt = (docType === 'invoice' || docType === 'receipt');
-
-                if (isQTSearch && isInvoiceOrReceipt) {
-                    // โหมด: สร้าง IN/RC จาก QT → เซ็ต ref เท่านั้น ไม่ต้อง edit mode
+                if (isNewFromSource) {
+                    // โหมด: สร้างใบใหม่จากเอกสารต้นทาง → เก็บ ref ไว้ ไม่เข้า edit mode
+                    // ห้าม override dropdown กลับเป็นชนิดเอกสารต้นทาง
+                    // เคส IN→RC: ใช้ billingAmount จาก IN เป็นยอดของ RC (ไม่ใช่ยอดเต็มของงาน)
+                    const useBillingAsTotal = (sourcePrefix === 'IN' && targetPrefix === 'RC');
+                    populateQuotationForm(data, {
+                        keepDocType: true,
+                        useBillingAsTotal: useBillingAsTotal,
+                        sourceRunNo: searchInput
+                    });
                     qtRefNo = searchInput;
                     setQtRefDisplay(searchInput);
                     statusEl.textContent = `✅ โหลดข้อมูลจาก ${searchInput} แล้ว`;
                     statusEl.style.color = '#16a34a';
                 } else {
-                    // โหมด: แก้ไขใบเดิม
+                    // โหมด: แก้ไขใบเดิม (source === target)
+                    populateQuotationForm(data);
                     setQuotationEditMode(searchInput, data.rowIndex, data.sheetName);
                     statusEl.textContent = '✅ โหลดข้อมูลแล้ว';
                     statusEl.style.color = '#16a34a';
@@ -2402,14 +2513,15 @@
             if (refDisplay) refDisplay.textContent = '';
         }
 
-        function populateQuotationForm(data) {
+        function populateQuotationForm(data, options) {
+            options = options || {};
             // เพจ + theme
             if (data.pageKey) {
                 document.getElementById('quotationPage').value = data.pageKey;
                 applyQuotationTheme();
             }
-            // ประเภทเอกสาร
-            if (data.docType) {
+            // ประเภทเอกสาร (ข้ามถ้าโหมด newFromSource — เพื่อไม่ทับ dropdown ที่ผู้ใช้เลือกไว้)
+            if (data.docType && !options.keepDocType) {
                 document.getElementById('quotationDocType').value = data.docType;
                 applyDocumentType();
             }
@@ -2424,16 +2536,49 @@
             }
             // รายการ
             document.getElementById('qtTableBody').innerHTML = '';
-            if (data.items && data.items.length > 0) {
+            if (options.useBillingAsTotal && Number(data.billingAmount) > 0) {
+                // เคส IN→RC: เคลียร์รายการเดิม → ใส่ 1 row อ้างอิงใบ IN พร้อมยอด billingAmount
+                const typeLabelMap = {
+                    'deposit_50': 'มัดจำ 50%',
+                    'final_50':   'ชำระงวดที่ 2 (50%)',
+                    'full':       'ชำระเต็มจำนวน',
+                    'custom':     'ชำระตามใบแจ้งหนี้'
+                };
+                const typeLabel = typeLabelMap[data.billingType] || 'ชำระตามใบแจ้งหนี้';
+                const refRun = options.sourceRunNo || data.runNo || '';
+                const refLabel = 'ค่า' + typeLabel + ' ตามใบแจ้งหนี้ ' + refRun;
+                addQtRow(refLabel, '1', String(data.billingAmount));
+                // ส่วนลด: รีเซ็ตเป็น 0 เพราะรายการเดียวสะท้อนยอดสุทธิแล้ว
+                document.getElementById('qtDiscount').value = '0';
+            } else if (data.items && data.items.length > 0) {
                 data.items.forEach(row => addQtRow(row.name, row.qty, row.price));
+                document.getElementById('qtDiscount').value = data.discount || '0';
             } else {
                 addQtRow(); addQtRow(); addQtRow(); addQtRow();
+                document.getElementById('qtDiscount').value = data.discount || '0';
             }
-            // ส่วนลด
-            document.getElementById('qtDiscount').value = data.discount || '0';
             // หมายเหตุ
             if (document.getElementById('qtNotes')) {
                 document.getElementById('qtNotes').value = data.notes || '';
+            }
+            // Billing fields: restore ตอน edit ใบ IN เดิม / reset ตอน newFromSource
+            if (document.getElementById('qtBillingType')) {
+                if (options.useBillingAsTotal) {
+                    // RC ไม่ใช้ billing — ตั้ง default ไว้เฉยๆ (section ถูกซ่อนอยู่แล้ว)
+                    document.getElementById('qtBillingType').value = 'deposit_50';
+                } else if (data.billingType) {
+                    document.getElementById('qtBillingType').value = data.billingType;
+                } else if (!options.keepDocType) {
+                    // edit mode ของใบ QT/RC ที่ไม่มี billingType → default
+                    document.getElementById('qtBillingType').value = 'deposit_50';
+                }
+            }
+            if (document.getElementById('qtBillingAmount')) {
+                if (options.useBillingAsTotal) {
+                    document.getElementById('qtBillingAmount').value = '0';
+                } else if (data.billingAmount !== undefined && data.billingAmount !== null && data.billingAmount !== '') {
+                    document.getElementById('qtBillingAmount').value = data.billingAmount;
+                }
             }
             updateQtTotals();
         }
@@ -2447,6 +2592,10 @@
             const bar = document.getElementById('qtEditModeBar');
             bar.style.display = 'flex';
             document.getElementById('qtEditModeRunNo').textContent = runNo;
+
+            // Lock dropdown ประเภทเอกสาร — กันผู้ใช้เปลี่ยนชนิดใบกลางคันแล้ว save ทับผิด
+            const docTypeSel = document.getElementById('quotationDocType');
+            if (docTypeSel) docTypeSel.disabled = true;
 
             // เปลี่ยนปุ่ม
             const saveBtn = document.getElementById('qtSaveBtn');
@@ -2477,6 +2626,10 @@
             document.getElementById('qtSearchInput').value = '';
             document.getElementById('qtSearchStatus').textContent = '';
 
+            // Unlock dropdown ประเภทเอกสาร
+            const docTypeSel = document.getElementById('quotationDocType');
+            if (docTypeSel) docTypeSel.disabled = false;
+
             const saveBtn = document.getElementById('qtSaveBtn');
             saveBtn.innerHTML = '💾 บันทึกใบเสนอราคา';
             saveBtn.style.backgroundColor = '';
@@ -2502,6 +2655,11 @@
             const discount = parseNumber(document.getElementById('qtDiscount').value);
             const grandTotal = parseNumber(document.getElementById('qtGrandTotal').textContent);
             const itemsJson = JSON.stringify(formData.rows.filter(r => r.name || r.qty || r.price));
+            // Billing: ส่งทุก docType เพื่อ schema uniform — QT/RC จะได้ค่าว่าง/0 (ไม่กระทบพฤติกรรม)
+            const billingType = (docType === 'invoice' && document.getElementById('qtBillingType'))
+                ? document.getElementById('qtBillingType').value : '';
+            const billingAmount = (docType === 'invoice' && document.getElementById('qtBillingAmount'))
+                ? parseNumber(document.getElementById('qtBillingAmount').value) : 0;
             const customerNameRaw = document.getElementById('qtCustomerName').value || 'unnamed';
             // Sanitize customer name สำหรับใช้ในชื่อไฟล์ (เก็บเฉพาะตัวอักษรไทย/อังกฤษ/ตัวเลข)
             const customerName = customerNameRaw
@@ -2542,7 +2700,9 @@
                             subtotal: subtotal,
                             discount: discount,
                             grandTotal: grandTotal,
-                            notes: formData.notes || ""
+                            notes: formData.notes || "",
+                            billingType: billingType,
+                            billingAmount: billingAmount
                         })
                     })
                     .then(r => r.json())
@@ -2608,7 +2768,9 @@
                             subtotal: subtotal,
                             discount: discount,
                             grandTotal: grandTotal,
-                            notes: formData.notes || ""
+                            notes: formData.notes || "",
+                            billingType: billingType,
+                            billingAmount: billingAmount
                         })
                     })
                     .then(response => response.json())
