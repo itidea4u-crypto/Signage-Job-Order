@@ -602,6 +602,14 @@
             margin-top: 4px;
             margin-left: 30px;
         }
+        .qt-shop-address {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
+            margin-left: 30px;
+            line-height: 1.4;
+            max-width: 380px;
+        }
         .qt-doc-title {
             text-align: right;
         }
@@ -1033,6 +1041,10 @@
                 <option value="invoice">📄 ใบแจ้งหนี้</option>
                 <option value="receipt">✅ ใบเสร็จรับเงิน</option>
             </select>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; white-space: nowrap; cursor: pointer;">
+                <input type="checkbox" id="qtShowShopAddress" onchange="toggleShopAddress()">
+                แสดงที่อยู่ร้าน
+            </label>
         </div>
 
         <!-- ตัวใบจริง (ที่จะแคปเป็นรูป) -->
@@ -1043,6 +1055,7 @@
                 <div>
                     <div class="qt-shop-name" id="qtShopName">ป้ายสวยเด่น</div>
                     <div class="qt-shop-slogan" id="qtShopSlogan">เห็นแต่ไกล</div>
+                    <div class="qt-shop-address" id="qtShopAddress" style="display: none;"></div>
                 </div>
                 <div class="qt-doc-title">
                     <div class="main" id="qtDocTitle">ใบเสนอราคา</div>
@@ -1950,7 +1963,7 @@
                 titleEn: '/receipt',
                 showConditions: false,
                 signLeft: '',
-                signRight: 'ผู้เสนอราคา',
+                signRight: 'ผู้รับเงิน',
                 showLeftSign: false,
                 btnLabel: '💾 บันทึกใบเสร็จรับเงิน',
                 sheetAction: 'getReceiptRunNo',
@@ -1979,7 +1992,7 @@
             const signBoxLeft = document.getElementById('qtSignBoxLeft');
             if (signBoxLeft) signBoxLeft.style.display = config.showLeftSign ? '' : 'none';
             const signBoxRight = document.getElementById('qtSignBoxRight');
-            if (signBoxRight) signBoxRight.style.display = (docType === 'receipt') ? 'none' : '';
+            if (signBoxRight) signBoxRight.style.display = '';
             document.getElementById('qtSignLabelLeft').textContent = config.signLeft;
             document.getElementById('qtSignLabelRight').textContent = config.signRight;
 
@@ -2011,6 +2024,7 @@
             suayden: {
                 shopName: 'ป้ายสวยเด่น',
                 shopSlogan: 'เห็นแต่ไกล',
+                shopAddress: '222 ซอยศูนย์การค้าแฮปปี้แลนด์ 2 แขวงคลองจั่น เขตบางกะปิ กทม 10240',
                 themeClass: 'theme-suayden'
             },
             paiidea: {
@@ -2043,6 +2057,20 @@
             const sloganEl = document.getElementById('qtShopSlogan');
             sloganEl.textContent = theme.shopSlogan;
             sloganEl.style.display = theme.shopSlogan ? '' : 'none';
+            // อัปเดตที่อยู่ร้าน + คง state ตาม checkbox
+            const addrEl = document.getElementById('qtShopAddress');
+            if (addrEl) addrEl.textContent = theme.shopAddress || '';
+            toggleShopAddress();
+            saveQuotationForm();
+        }
+
+        function toggleShopAddress() {
+            const cb = document.getElementById('qtShowShopAddress');
+            const addrEl = document.getElementById('qtShopAddress');
+            if (!cb || !addrEl) return;
+            // แสดงเมื่อ: ติ๊ก + theme มีที่อยู่จริง
+            const shouldShow = cb.checked && (addrEl.textContent || '').trim() !== '';
+            addrEl.style.display = shouldShow ? '' : 'none';
             saveQuotationForm();
         }
 
@@ -2105,8 +2133,18 @@
             let subtotal = 0;
             const rows = document.querySelectorAll('#qtTableBody tr');
             rows.forEach(tr => {
-                const qty = parseNumber(tr.querySelector('.qt-qty').value);
-                const price = parseNumber(tr.querySelector('.qt-price').value);
+                const qtyInput = tr.querySelector('.qt-qty');
+                const priceInput = tr.querySelector('.qt-price');
+                const qtyRaw = (qtyInput.value || '').trim();
+                const price = parseNumber(priceInput.value);
+                let qty;
+                if (qtyRaw === '' && price > 0) {
+                    // มีราคาแต่ไม่ได้ใส่จำนวน → auto-fill qty = 1
+                    qtyInput.value = '1';
+                    qty = 1;
+                } else {
+                    qty = parseNumber(qtyRaw);
+                }
                 const total = qty * price;
                 tr.querySelector('.qt-total').textContent = formatNumber(total);
                 subtotal += total;
@@ -2209,8 +2247,8 @@
             document.querySelectorAll('#qtTableBody tr').forEach(tr => {
                 rows.push({
                     name: tr.querySelector('.qt-name').value,
-                    qty: tr.querySelector('.qt-qty').value,
-                    price: tr.querySelector('.qt-price').value
+                    qty: (tr.querySelector('.qt-qty').value || '').trim(),
+                    price: (tr.querySelector('.qt-price').value || '').trim()
                 });
             });
             return {
@@ -2224,7 +2262,8 @@
                 discount: document.getElementById('qtDiscount').value,
                 notes: document.getElementById('qtNotes') ? document.getElementById('qtNotes').value : '',
                 billingType: document.getElementById('qtBillingType') ? document.getElementById('qtBillingType').value : 'deposit_50',
-                billingAmount: document.getElementById('qtBillingAmount') ? document.getElementById('qtBillingAmount').value : '0'
+                billingAmount: document.getElementById('qtBillingAmount') ? document.getElementById('qtBillingAmount').value : '0',
+                showShopAddress: document.getElementById('qtShowShopAddress') ? document.getElementById('qtShowShopAddress').checked : false
             };
         }
 
@@ -2288,6 +2327,12 @@
                 }
                 if (document.getElementById('qtBillingAmount') && data.billingAmount !== undefined && data.billingAmount !== null) {
                     document.getElementById('qtBillingAmount').value = data.billingAmount;
+                }
+                // คืนสถานะ checkbox "แสดงที่อยู่ร้าน"
+                const showAddrCb = document.getElementById('qtShowShopAddress');
+                if (showAddrCb) {
+                    showAddrCb.checked = !!data.showShopAddress;
+                    toggleShopAddress();
                 }
                 
                 // คืนแถว
@@ -2654,6 +2699,14 @@
             const originalBtnText = btnSave.innerHTML;
             btnSave.disabled = true;
 
+            // บังคับ commit ค่าใน input ที่ active อยู่ (กัน Android keyboard composition ที่ยังไม่ trigger oninput)
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
+            // กัน edge case: ค่าใน DOM ยังไม่ถูกคำนวณ — บังคับ recalc + auto-fill qty ก่อน serialize
+            updateQtTotals();
+
             const formData = getQuotationFormData();
             const subtotal = parseNumber(document.getElementById('qtSubtotal').textContent);
             const discount = parseNumber(document.getElementById('qtDiscount').value);
@@ -2782,7 +2835,8 @@
                         if (saveData.status !== "success") {
                             throw new Error("บันทึกรูปไม่สำเร็จ: " + (saveData.message || "ไม่ทราบสาเหตุ"));
                         }
-                        btnSave.innerHTML = "💾 กำลังเตรียมไฟล์ PNG + PDF...";
+                        console.log('[saveQuotation] บันทึกข้อมูลใน sheet สำเร็จ runNo=', saveData.runNo);
+                        btnSave.innerHTML = "✅ บันทึกข้อมูลแล้ว กำลังสร้างรูป...";
                         return deliverImageAndPdfToUser(imgData, fileName, `${docConfig.titleTh} ${runNo}`);
                     });
                 });
