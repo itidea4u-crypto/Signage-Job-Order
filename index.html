@@ -2870,6 +2870,11 @@
             const subtotal = parseNumber(document.getElementById('qtSubtotal').textContent);
             const discount = parseNumber(document.getElementById('qtDiscount').value);
             const grandTotal = parseNumber(document.getElementById('qtGrandTotal').textContent);
+            const vatChecked  = !!(document.getElementById('qtVatCheck') && document.getElementById('qtVatCheck').checked);
+            const whtChecked  = !!(document.getElementById('qtWhtCheck') && document.getElementById('qtWhtCheck').checked);
+            const vatAmt      = vatChecked ? Math.round(grandTotal * 0.07 * 100) / 100 : 0;
+            const whtAmt      = whtChecked ? Math.round(grandTotal * 0.03 * 100) / 100 : 0;
+            const netPayAmt   = grandTotal + vatAmt - whtAmt;
             const itemsJson = JSON.stringify(formData.rows.filter(r => r.name || r.qty || r.price));
             // Billing: ส่งทุก docType เพื่อ schema uniform — QT/RC จะได้ค่าว่าง/0 (ไม่กระทบพฤติกรรม)
             const billingType = (docType === 'invoice' && document.getElementById('qtBillingType'))
@@ -2918,7 +2923,14 @@
                             grandTotal: grandTotal,
                             notes: formData.notes || "",
                             billingType: billingType,
-                            billingAmount: billingAmount
+                            billingAmount: billingAmount,
+                            pageChannel:     formData.pageChannel || '',
+                            bankAccountType: formData.bankAccountType || 'shop',
+                            vatCheck:        vatChecked,
+                            whtCheck:        whtChecked,
+                            vatAmount:       vatAmt,
+                            whtAmount:       whtAmt,
+                            netPayable:      netPayAmt
                         })
                     })
                     .then(r => r.json())
@@ -2986,7 +2998,14 @@
                             grandTotal: grandTotal,
                             notes: formData.notes || "",
                             billingType: billingType,
-                            billingAmount: billingAmount
+                            billingAmount: billingAmount,
+                            pageChannel:     formData.pageChannel || '',
+                            bankAccountType: formData.bankAccountType || 'shop',
+                            vatCheck:        vatChecked,
+                            whtCheck:        whtChecked,
+                            vatAmount:       vatAmt,
+                            whtAmount:       whtAmt,
+                            netPayable:      netPayAmt
                         })
                     })
                     .then(response => response.json())
