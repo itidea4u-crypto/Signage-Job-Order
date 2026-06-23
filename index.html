@@ -583,6 +583,25 @@
         .quotation-box.theme-farmpai .qt-table thead {
             background-color: #bbf7d0;
         }
+        /* Theme: หัวบิลบริษัท (สีกรมท่า/navy) */
+        .quotation-box.theme-companybill {
+            border-top: 6px solid #1e3a5f;
+        }
+        .quotation-box.theme-companybill .qt-header-divider {
+            border-bottom: 3px solid #1e3a5f;
+        }
+        .quotation-box.theme-companybill .qt-shop-name {
+            color: #1e3a5f;
+            font-size: 30px;
+        }
+        .quotation-box.theme-companybill .qt-shop-address {
+            color: #374151;
+            font-size: 13px;
+            white-space: pre-line;
+        }
+        .quotation-box.theme-companybill .qt-table thead {
+            background-color: #dbeafe;
+        }
 
         .qt-top {
             display: flex;
@@ -1035,6 +1054,7 @@
                 <option value="paiidea">ป้ายไอเดีย Pai idea</option>
                 <option value="aksornloha">อักษรโลหะ</option>
                 <option value="farmpai">ฟาร์มป้ายสวยรวยทรัพย์</option>
+                <option value="companybill">หัวบิลบริษัท</option>
             </select>
             <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">ประเภทเอกสาร:</span>
             <select id="quotationDocType" onchange="applyDocumentType()" style="flex: 1; padding: 8px 12px; font-family: 'Sarabun', sans-serif; font-size: 16px; border: 2px solid #d1d5db; border-radius: 6px; background: white; outline: none;">
@@ -1137,11 +1157,21 @@
                     <div class="qt-bank-header">💳 ช่องทางการโอนเงิน</div>
                     <div style="padding: 4px 8px; display: flex; align-items: center; gap: 6px; border: 1px solid #f9a8d4; border-top: none; background: #fff8fc;">
                         <span style="font-size:13px; font-weight:700; white-space:nowrap;">🏦 บัญชี:</span>
-                        <input type="text" id="qtBankAccount" placeholder="ชื่อบัญชี / เลขบัญชี" oninput="saveQuotationForm()" style="flex:1; border:none; border-bottom:1px dotted #999; outline:none; font-family:'Sarabun',sans-serif; font-size:12px; background:transparent; padding:2px 4px;">
+                        <select id="qtBankAccountType" onchange="onBankAccountTypeChange()" style="flex:1; border:none; border-bottom:1px dotted #999; outline:none; font-family:'Sarabun',sans-serif; font-size:12px; background:transparent; padding:2px 4px; -webkit-appearance:auto; cursor:pointer;">
+                            <option value="shop">ร้าน/บริษัท</option>
+                            <option value="personal">บัญชีส่วนตัว</option>
+                        </select>
                     </div>
                     <div class="qt-attachment-slot" id="qtAttach3" onclick="triggerQtAttach(3)" style="border-top: none; border-radius: 0 0 6px 6px;">
                         <input type="file" id="qtAttachInput3" accept="image/*" style="display:none" onchange="handleQtAttach(this, 3)">
                         <div class="placeholder">📷<br>แตะเพื่อแนบ<br>QR / เลขบัญชี</div>
+                    </div>
+                    <div id="qtIdCardSection" style="display:none; margin-top: 4px;">
+                        <div style="font-size:12px; font-weight:700; color:#dc2626; padding:3px 6px; background:#fff1f2; border:1px solid #fca5a5; border-radius:4px 4px 0 0;">📋 สำเนาบัตรประชาชน</div>
+                        <div class="qt-attachment-slot" id="qtAttach4" onclick="triggerQtAttach(4)" style="min-height:80px; border-top:none; border-radius:0 0 4px 4px;">
+                            <input type="file" id="qtAttachInput4" accept="image/*" style="display:none" onchange="handleQtAttach(this, 4)">
+                            <div class="placeholder">📷<br>แตะเพื่อแนบ<br>สำเนาบัตรฯ</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1164,7 +1194,7 @@
                             <span class="baht-text" id="qtGrandTotalText">(ศูนย์บาทถ้วน)</span>
                         </div>
 
-                        <!-- VAT / WHT -->
+                        <!-- VAT / หัก ณ ที่จ่าย -->
                         <div class="qt-summary-row" style="gap: 8px;">
                             <label style="display:flex; align-items:center; gap:4px; cursor:pointer; font-weight:600; color:#059669;">
                                 <input type="checkbox" id="qtVatCheck" data-no-capture="true" onchange="updateQtTotals()" style="transform:scale(1.2);">
@@ -1175,13 +1205,16 @@
                         <div class="qt-summary-row" style="gap: 8px;">
                             <label style="display:flex; align-items:center; gap:4px; cursor:pointer; font-weight:600; color:#dc2626;">
                                 <input type="checkbox" id="qtWhtCheck" data-no-capture="true" onchange="updateQtTotals()" style="transform:scale(1.2);">
-                                - WHT 3%
+                                - หัก ณ ที่จ่าย 3%
                             </label>
                             <span class="value" id="qtWhtAmount" style="color:#dc2626;">0</span>
                         </div>
                         <div class="qt-summary-row divider grand" id="qtNetPayableRow" style="display:none;">
                             <span class="label">ยอดชำระสุทธิ</span>
                             <span class="value" id="qtNetPayable">0</span>
+                        </div>
+                        <div class="qt-summary-row" id="qtNetPayableBahtRow" style="justify-content: flex-end; display:none;">
+                            <span class="baht-text" id="qtNetPayableBahtText"></span>
                         </div>
 
                         <!-- ===== Billing Plan (แสดงเฉพาะใบแจ้งหนี้) ===== -->
@@ -2067,26 +2100,48 @@
                 shopName: 'ฟาร์มป้ายสวยรวยทรัพย์',
                 shopSlogan: '',
                 themeClass: 'theme-farmpai'
+            },
+            companybill: {
+                shopName: 'บริษัท ไอเดีย ฟอร์ยู 1979 จำกัด',
+                shopSlogan: '',
+                shopAddress: '222,224 ซอยศูนย์การค้าแฮปปี้แลนด์ 2 แขวงคลองจั่น\nเขตบางกะปิ กรุงเทพมหานคร 10240\nเลขที่ผู้เสียภาษี 0-1055-67025-32-6 (สำนักงานใหญ่)',
+                themeClass: 'theme-companybill',
+                forceShowAddress: true
             }
         };
+
+        // reverse-lookup shopName → key (รองรับทั้ง key จริงและ shopName ที่ backend ส่งกลับ)
+        function resolvePageKey(raw) {
+            if (!raw) return raw;
+            if (QT_THEMES[raw]) return raw; // เป็น key อยู่แล้ว
+            for (const key in QT_THEMES) {
+                if (QT_THEMES[key].shopName === raw) return key;
+            }
+            return raw; // fallback: คืนค่าเดิมถ้าหาไม่เจอ
+        }
 
         function applyQuotationTheme() {
             const select = document.getElementById('quotationPage');
             const theme = QT_THEMES[select.value];
             if (!theme) return;
             const box = document.getElementById('quotationBox');
-            // ลบ theme class เก่าออก
-            box.classList.remove('theme-suayden', 'theme-paiidea', 'theme-aksornloha', 'theme-farmpai');
+            // ลบ theme class เก่าออก (รวม companybill)
+            box.classList.remove('theme-suayden', 'theme-paiidea', 'theme-aksornloha', 'theme-farmpai', 'theme-companybill');
             box.classList.add(theme.themeClass);
             // อัปเดตชื่อร้าน
             document.getElementById('qtShopName').textContent = theme.shopName;
             const sloganEl = document.getElementById('qtShopSlogan');
-            sloganEl.textContent = theme.shopSlogan;
+            sloganEl.textContent = theme.shopSlogan || '';
             sloganEl.style.display = theme.shopSlogan ? '' : 'none';
-            // อัปเดตที่อยู่ร้าน + คง state ตาม checkbox
+            // อัปเดตที่อยู่ (ใช้ innerHTML เพื่อรองรับ \n → pre-line)
             const addrEl = document.getElementById('qtShopAddress');
             if (addrEl) addrEl.textContent = theme.shopAddress || '';
-            toggleShopAddress();
+            // companybill: force-show ที่อยู่บริษัทเสมอ
+            if (theme.forceShowAddress && addrEl) {
+                addrEl.style.display = '';
+            } else {
+                toggleShopAddress();
+            }
             saveQuotationForm();
         }
 
@@ -2189,9 +2244,17 @@
             if (document.getElementById('qtVatAmount')) document.getElementById('qtVatAmount').textContent = formatNumber(vatAmount);
             if (document.getElementById('qtWhtAmount')) document.getElementById('qtWhtAmount').textContent = formatNumber(whtAmount);
             const netRow = document.getElementById('qtNetPayableRow');
+            const netBahtRow = document.getElementById('qtNetPayableBahtRow');
+            const showNet = vatChecked || whtChecked;
             if (netRow) {
-                netRow.style.display = (vatChecked || whtChecked) ? 'flex' : 'none';
+                netRow.style.display = showNet ? 'flex' : 'none';
                 if (document.getElementById('qtNetPayable')) document.getElementById('qtNetPayable').textContent = formatNumber(netPayable);
+            }
+            if (netBahtRow) {
+                netBahtRow.style.display = showNet ? 'flex' : 'none';
+                if (document.getElementById('qtNetPayableBahtText')) {
+                    document.getElementById('qtNetPayableBahtText').textContent = '(' + numberToThaiBaht(netPayable) + ')';
+                }
             }
             updateQtBilling(netPayable);
             saveQuotationForm();
@@ -2311,7 +2374,7 @@
                 billingAmount: document.getElementById('qtBillingAmount') ? document.getElementById('qtBillingAmount').value : '0',
                 showShopAddress: document.getElementById('qtShowShopAddress') ? document.getElementById('qtShowShopAddress').checked : false,
                 pageChannel: document.getElementById('qtPageChannel') ? document.getElementById('qtPageChannel').value : '',
-                bankAccount: document.getElementById('qtBankAccount') ? document.getElementById('qtBankAccount').value : '',
+                bankAccountType: document.getElementById('qtBankAccountType') ? document.getElementById('qtBankAccountType').value : 'shop',
                 vatCheck: document.getElementById('qtVatCheck') ? document.getElementById('qtVatCheck').checked : false,
                 whtCheck: document.getElementById('qtWhtCheck') ? document.getElementById('qtWhtCheck').checked : false
             };
@@ -2353,7 +2416,7 @@
 
                 // คืนค่า
                 if (data.page) {
-                    document.getElementById('quotationPage').value = data.page;
+                    document.getElementById('quotationPage').value = resolvePageKey(data.page);
                     applyQuotationTheme();
                 }
                 if (data.docType) {
@@ -2380,7 +2443,10 @@
                 }
                 // คืนค่า fields ใหม่
                 if (document.getElementById('qtPageChannel')) document.getElementById('qtPageChannel').value = data.pageChannel || '';
-                if (document.getElementById('qtBankAccount')) document.getElementById('qtBankAccount').value = data.bankAccount || '';
+                if (document.getElementById('qtBankAccountType')) {
+                    document.getElementById('qtBankAccountType').value = data.bankAccountType || 'shop';
+                    onBankAccountTypeChange();
+                }
                 if (document.getElementById('qtVatCheck')) document.getElementById('qtVatCheck').checked = !!data.vatCheck;
                 if (document.getElementById('qtWhtCheck')) document.getElementById('qtWhtCheck').checked = !!data.whtCheck;
 
@@ -2422,7 +2488,10 @@
             }
             // ล้าง fields ใหม่
             if (document.getElementById('qtPageChannel')) document.getElementById('qtPageChannel').value = '';
-            if (document.getElementById('qtBankAccount')) document.getElementById('qtBankAccount').value = '';
+            if (document.getElementById('qtBankAccountType')) {
+                document.getElementById('qtBankAccountType').value = 'shop';
+                onBankAccountTypeChange();
+            }
             if (document.getElementById('qtVatCheck')) document.getElementById('qtVatCheck').checked = false;
             if (document.getElementById('qtWhtCheck')) document.getElementById('qtWhtCheck').checked = false;
 
@@ -2466,7 +2535,7 @@
         }
 
         // ===== รูปแนบในใบเสนอราคา =====
-        const qtAttachData = { 1: null, 2: null, 3: null }; // เก็บ dataURL (1,2 = รูปป้าย, 3 = บัญชี)
+        const qtAttachData = { 1: null, 2: null, 3: null, 4: null }; // 1,2=รูปป้าย, 3=QR/บัญชี, 4=สำเนาบัตรฯ
 
         function triggerQtAttach(num) {
             // ถ้ามีรูปแล้ว → ไม่ต้อง trigger (จะกดปุ่ม X แทน)
@@ -2509,13 +2578,29 @@
             renderQtAttach(num);
         }
 
+        function onBankAccountTypeChange() {
+            const val = document.getElementById('qtBankAccountType') ? document.getElementById('qtBankAccountType').value : 'shop';
+            const idSection = document.getElementById('qtIdCardSection');
+            const attach3 = document.getElementById('qtAttach3');
+            if (idSection) idSection.style.display = (val === 'personal') ? 'block' : 'none';
+            // ปรับ border-radius ของ slot 3 ตามว่ามี slot 4 อยู่ไหม
+            if (attach3) attach3.style.borderRadius = (val === 'personal') ? '0' : '0 0 6px 6px';
+            if (val !== 'personal') {
+                qtAttachData[4] = null;
+                renderQtAttach(4);
+            }
+            saveQuotationForm();
+        }
+
         function clearQtAttachments() {
             qtAttachData[1] = null;
             qtAttachData[2] = null;
             qtAttachData[3] = null;
+            qtAttachData[4] = null;
             renderQtAttach(1);
             renderQtAttach(2);
             renderQtAttach(3);
+            renderQtAttach(4);
         }
 
         // ============================================================
@@ -2626,9 +2711,9 @@
 
         function populateQuotationForm(data, options) {
             options = options || {};
-            // เพจ + theme
+            // เพจ + theme (resolvePageKey รองรับทั้ง key และ shopName ที่ backend ส่งกลับ)
             if (data.pageKey) {
-                document.getElementById('quotationPage').value = data.pageKey;
+                document.getElementById('quotationPage').value = resolvePageKey(data.pageKey);
                 applyQuotationTheme();
             }
             // ประเภทเอกสาร (ข้ามถ้าโหมด newFromSource — เพื่อไม่ทับ dropdown ที่ผู้ใช้เลือกไว้)
@@ -2690,6 +2775,18 @@
                 } else if (data.billingAmount !== undefined && data.billingAmount !== null && data.billingAmount !== '') {
                     document.getElementById('qtBillingAmount').value = data.billingAmount;
                 }
+            }
+            // ช่องทาง (pageChannel)
+            if (document.getElementById('qtPageChannel')) {
+                document.getElementById('qtPageChannel').value = data.pageChannel || '';
+            }
+            // VAT / หัก ณ ที่จ่าย
+            if (document.getElementById('qtVatCheck')) document.getElementById('qtVatCheck').checked = !!data.vatCheck;
+            if (document.getElementById('qtWhtCheck')) document.getElementById('qtWhtCheck').checked = !!data.whtCheck;
+            // บัญชีรับเงิน
+            if (document.getElementById('qtBankAccountType')) {
+                document.getElementById('qtBankAccountType').value = data.bankAccountType || 'shop';
+                onBankAccountTypeChange();
             }
             updateQtTotals();
         }
@@ -2978,19 +3075,47 @@
                         }
                     }
 
-                    // แทนที่ช่องแนบรูปเลขบัญชี/QR (slot 3) - คอลัมน์เดี่ยว
+                    // แทนที่ช่องแนบรูป QR (slot 3) และสำเนาบัตรฯ (slot 4)
                     const bankSection = clonedDoc.getElementById('qtBankSection');
                     if (bankSection) {
-                        const bankSlot = bankSection.querySelector('.qt-attachment-slot');
-                        if (qtAttachData[3]) {
-                            if (bankSlot) {
-                                bankSlot.innerHTML = `<img style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;object-position:center;display:block;margin:auto;" src="${qtAttachData[3]}">`;
-                                bankSlot.style.border = '1px solid #e5e7eb';
-                                bankSlot.style.borderTop = 'none';
-                                bankSlot.style.cursor = 'default';
+                        // แปลง select ประเภทบัญชีเป็น span
+                        const bankTypeSel = bankSection.querySelector('#qtBankAccountType');
+                        if (bankTypeSel) {
+                            const selText = bankTypeSel.options[bankTypeSel.selectedIndex] ? bankTypeSel.options[bankTypeSel.selectedIndex].text : '';
+                            const selSpan = clonedDoc.createElement('span');
+                            selSpan.textContent = selText;
+                            selSpan.style.cssText = 'font-family:Sarabun,sans-serif;font-size:12px;font-weight:600;';
+                            bankTypeSel.parentNode.replaceChild(selSpan, bankTypeSel);
+                        }
+                        // Slot 3: QR / เลขบัญชี
+                        const qrSlot = clonedDoc.getElementById('qtAttach3');
+                        if (qrSlot) {
+                            if (qtAttachData[3]) {
+                                qrSlot.innerHTML = `<img style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;object-position:center;display:block;margin:auto;" src="${qtAttachData[3]}">`;
+                                qrSlot.style.border = '1px solid #e5e7eb';
+                                qrSlot.style.cursor = 'default';
+                            } else {
+                                qrSlot.style.display = 'none';
                             }
-                        } else {
-                            // ไม่มีรูปบัญชี ซ่อนทั้งคอลัมน์
+                        }
+                        // Slot 4: สำเนาบัตรประชาชน (เฉพาะ personal)
+                        const isPersonal = document.getElementById('qtBankAccountType') && document.getElementById('qtBankAccountType').value === 'personal';
+                        const idSection = clonedDoc.getElementById('qtIdCardSection');
+                        if (idSection) {
+                            if (isPersonal && qtAttachData[4]) {
+                                idSection.style.display = 'block';
+                                const idSlot = clonedDoc.getElementById('qtAttach4');
+                                if (idSlot) {
+                                    idSlot.innerHTML = `<img style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;object-position:center;display:block;margin:auto;" src="${qtAttachData[4]}">`;
+                                    idSlot.style.border = '1px solid #e5e7eb';
+                                    idSlot.style.cursor = 'default';
+                                }
+                            } else {
+                                idSection.style.display = 'none';
+                            }
+                        }
+                        // ถ้าไม่มีรูปใดเลย ซ่อนทั้งคอลัมน์
+                        if (!qtAttachData[3] && !(isPersonal && qtAttachData[4])) {
                             bankSection.style.display = 'none';
                         }
                     }
