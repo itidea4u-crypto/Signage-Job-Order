@@ -1072,6 +1072,7 @@
                     <div class="qt-info-row"><span class="label">ลูกค้า :</span> <input type="text" id="qtCustomerName"></div>
                     <div class="qt-info-row"><span class="label">ที่อยู่ :</span> <input type="text" id="qtCustomerAddress"></div>
                     <div class="qt-info-row"><span class="label">เบอร์ :</span> <input type="text" id="qtCustomerPhone" inputmode="tel"></div>
+                    <div class="qt-info-row"><span class="label">ช่องทาง :</span> <input type="text" id="qtPageChannel" placeholder="Facebook / Line / etc." oninput="saveQuotationForm()"></div>
                 </div>
                 <div class="qt-info-right">
                     <div class="qt-info-row" style="justify-content: flex-end;">
@@ -1134,7 +1135,11 @@
                 <!-- คอลัมน์ 2: ช่องทางการโอนเงิน -->
                 <div class="qt-bank-col" id="qtBankSection">
                     <div class="qt-bank-header">💳 ช่องทางการโอนเงิน</div>
-                    <div class="qt-attachment-slot" id="qtAttach3" onclick="triggerQtAttach(3)">
+                    <div style="padding: 4px 8px; display: flex; align-items: center; gap: 6px; border: 1px solid #f9a8d4; border-top: none; background: #fff8fc;">
+                        <span style="font-size:13px; font-weight:700; white-space:nowrap;">🏦 บัญชี:</span>
+                        <input type="text" id="qtBankAccount" placeholder="ชื่อบัญชี / เลขบัญชี" oninput="saveQuotationForm()" style="flex:1; border:none; border-bottom:1px dotted #999; outline:none; font-family:'Sarabun',sans-serif; font-size:12px; background:transparent; padding:2px 4px;">
+                    </div>
+                    <div class="qt-attachment-slot" id="qtAttach3" onclick="triggerQtAttach(3)" style="border-top: none; border-radius: 0 0 6px 6px;">
                         <input type="file" id="qtAttachInput3" accept="image/*" style="display:none" onchange="handleQtAttach(this, 3)">
                         <div class="placeholder">📷<br>แตะเพื่อแนบ<br>QR / เลขบัญชี</div>
                     </div>
@@ -1157,6 +1162,26 @@
                         </div>
                         <div class="qt-summary-row" style="justify-content: flex-end;">
                             <span class="baht-text" id="qtGrandTotalText">(ศูนย์บาทถ้วน)</span>
+                        </div>
+
+                        <!-- VAT / WHT -->
+                        <div class="qt-summary-row" style="gap: 8px;">
+                            <label style="display:flex; align-items:center; gap:4px; cursor:pointer; font-weight:600; color:#059669;">
+                                <input type="checkbox" id="qtVatCheck" data-no-capture="true" onchange="updateQtTotals()" style="transform:scale(1.2);">
+                                + VAT 7%
+                            </label>
+                            <span class="value" id="qtVatAmount" style="color:#059669;">0</span>
+                        </div>
+                        <div class="qt-summary-row" style="gap: 8px;">
+                            <label style="display:flex; align-items:center; gap:4px; cursor:pointer; font-weight:600; color:#dc2626;">
+                                <input type="checkbox" id="qtWhtCheck" data-no-capture="true" onchange="updateQtTotals()" style="transform:scale(1.2);">
+                                - WHT 3%
+                            </label>
+                            <span class="value" id="qtWhtAmount" style="color:#dc2626;">0</span>
+                        </div>
+                        <div class="qt-summary-row divider grand" id="qtNetPayableRow" style="display:none;">
+                            <span class="label">ยอดชำระสุทธิ</span>
+                            <span class="value" id="qtNetPayable">0</span>
                         </div>
 
                         <!-- ===== Billing Plan (แสดงเฉพาะใบแจ้งหนี้) ===== -->
@@ -2151,11 +2176,24 @@
                 subtotal += total;
             });
             const discount = parseNumber(document.getElementById('qtDiscount').value);
-            const grand = Math.max(0, subtotal - discount);
+            const taxable = Math.max(0, subtotal - discount);
+            const vatChecked = !!(document.getElementById('qtVatCheck') && document.getElementById('qtVatCheck').checked);
+            const whtChecked = !!(document.getElementById('qtWhtCheck') && document.getElementById('qtWhtCheck').checked);
+            const vatAmount = vatChecked ? Math.round(taxable * 0.07 * 100) / 100 : 0;
+            const whtAmount = whtChecked ? Math.round(taxable * 0.03 * 100) / 100 : 0;
+            const netPayable = taxable + vatAmount - whtAmount;
+
             document.getElementById('qtSubtotal').textContent = formatNumber(subtotal);
-            document.getElementById('qtGrandTotal').textContent = formatNumber(grand);
-            document.getElementById('qtGrandTotalText').textContent = '(' + numberToThaiBaht(grand) + ')';
-            updateQtBilling(grand);
+            document.getElementById('qtGrandTotal').textContent = formatNumber(taxable);
+            document.getElementById('qtGrandTotalText').textContent = '(' + numberToThaiBaht(taxable) + ')';
+            if (document.getElementById('qtVatAmount')) document.getElementById('qtVatAmount').textContent = formatNumber(vatAmount);
+            if (document.getElementById('qtWhtAmount')) document.getElementById('qtWhtAmount').textContent = formatNumber(whtAmount);
+            const netRow = document.getElementById('qtNetPayableRow');
+            if (netRow) {
+                netRow.style.display = (vatChecked || whtChecked) ? 'flex' : 'none';
+                if (document.getElementById('qtNetPayable')) document.getElementById('qtNetPayable').textContent = formatNumber(netPayable);
+            }
+            updateQtBilling(netPayable);
             saveQuotationForm();
         }
 
@@ -2190,15 +2228,22 @@
             remainingEl.textContent = formatNumber(remaining);
         }
 
+        function computeNetPayable() {
+            const taxable = parseNumber(document.getElementById('qtGrandTotal').textContent);
+            const vatChecked = !!(document.getElementById('qtVatCheck') && document.getElementById('qtVatCheck').checked);
+            const whtChecked = !!(document.getElementById('qtWhtCheck') && document.getElementById('qtWhtCheck').checked);
+            const vatAmount = vatChecked ? Math.round(taxable * 0.07 * 100) / 100 : 0;
+            const whtAmount = whtChecked ? Math.round(taxable * 0.03 * 100) / 100 : 0;
+            return taxable + vatAmount - whtAmount;
+        }
+
         function onQtBillingTypeChange() {
-            const grand = parseNumber(document.getElementById('qtGrandTotal').textContent);
-            updateQtBilling(grand);
+            updateQtBilling(computeNetPayable());
             saveQuotationForm();
         }
 
         function onQtBillingAmountInput() {
-            const grand = parseNumber(document.getElementById('qtGrandTotal').textContent);
-            updateQtBilling(grand);
+            updateQtBilling(computeNetPayable());
             saveQuotationForm();
         }
 
@@ -2264,7 +2309,11 @@
                 notes: document.getElementById('qtNotes') ? document.getElementById('qtNotes').value : '',
                 billingType: document.getElementById('qtBillingType') ? document.getElementById('qtBillingType').value : 'deposit_50',
                 billingAmount: document.getElementById('qtBillingAmount') ? document.getElementById('qtBillingAmount').value : '0',
-                showShopAddress: document.getElementById('qtShowShopAddress') ? document.getElementById('qtShowShopAddress').checked : false
+                showShopAddress: document.getElementById('qtShowShopAddress') ? document.getElementById('qtShowShopAddress').checked : false,
+                pageChannel: document.getElementById('qtPageChannel') ? document.getElementById('qtPageChannel').value : '',
+                bankAccount: document.getElementById('qtBankAccount') ? document.getElementById('qtBankAccount').value : '',
+                vatCheck: document.getElementById('qtVatCheck') ? document.getElementById('qtVatCheck').checked : false,
+                whtCheck: document.getElementById('qtWhtCheck') ? document.getElementById('qtWhtCheck').checked : false
             };
         }
 
@@ -2329,6 +2378,12 @@
                 if (document.getElementById('qtBillingAmount') && data.billingAmount !== undefined && data.billingAmount !== null) {
                     document.getElementById('qtBillingAmount').value = data.billingAmount;
                 }
+                // คืนค่า fields ใหม่
+                if (document.getElementById('qtPageChannel')) document.getElementById('qtPageChannel').value = data.pageChannel || '';
+                if (document.getElementById('qtBankAccount')) document.getElementById('qtBankAccount').value = data.bankAccount || '';
+                if (document.getElementById('qtVatCheck')) document.getElementById('qtVatCheck').checked = !!data.vatCheck;
+                if (document.getElementById('qtWhtCheck')) document.getElementById('qtWhtCheck').checked = !!data.whtCheck;
+
                 // คืนสถานะ checkbox "แสดงที่อยู่ร้าน"
                 const showAddrCb = document.getElementById('qtShowShopAddress');
                 if (showAddrCb) {
@@ -2365,6 +2420,12 @@
             if (document.getElementById('qtNotes')) {
                 document.getElementById('qtNotes').value = '';
             }
+            // ล้าง fields ใหม่
+            if (document.getElementById('qtPageChannel')) document.getElementById('qtPageChannel').value = '';
+            if (document.getElementById('qtBankAccount')) document.getElementById('qtBankAccount').value = '';
+            if (document.getElementById('qtVatCheck')) document.getElementById('qtVatCheck').checked = false;
+            if (document.getElementById('qtWhtCheck')) document.getElementById('qtWhtCheck').checked = false;
+
             // Reset billing fields กลับ default
             const billingTypeEl = document.getElementById('qtBillingType');
             if (billingTypeEl) billingTypeEl.value = 'deposit_50';
