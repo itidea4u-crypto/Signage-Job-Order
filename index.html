@@ -2781,8 +2781,9 @@
                 document.getElementById('qtPageChannel').value = data.pageChannel || '';
             }
             // VAT / หัก ณ ที่จ่าย
-            if (document.getElementById('qtVatCheck')) document.getElementById('qtVatCheck').checked = !!data.vatCheck;
-            if (document.getElementById('qtWhtCheck')) document.getElementById('qtWhtCheck').checked = !!data.whtCheck;
+            // IN→RC: billingAmount คือยอดรับจริงแล้ว ห้ามคำนวณ VAT/WHT ซ้ำบนยอดนั้น
+            if (document.getElementById('qtVatCheck')) document.getElementById('qtVatCheck').checked = options.useBillingAsTotal ? false : !!data.vatCheck;
+            if (document.getElementById('qtWhtCheck')) document.getElementById('qtWhtCheck').checked = options.useBillingAsTotal ? false : !!data.whtCheck;
             // บัญชีรับเงิน
             if (document.getElementById('qtBankAccountType')) {
                 document.getElementById('qtBankAccountType').value = data.bankAccountType || 'shop';
