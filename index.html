@@ -1222,6 +1222,7 @@
                             <div class="qt-summary-row divider" style="padding-top: 6px;">
                                 <span class="label">เงื่อนไขเรียกเก็บ</span>
                                 <select id="qtBillingType" onchange="onQtBillingTypeChange()" style="padding: 3px 6px; font-family: 'Sarabun', sans-serif; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; outline: none; max-width: 60%;">
+                                    <option value="">โปรดเลือก</option>
                                     <option value="deposit_50">มัดจำ 50%</option>
                                     <option value="final_50">งวดที่ 2 จำนวน 50%</option>
                                     <option value="full">ชำระเต็มจำนวน</option>
@@ -2181,7 +2182,7 @@
                 rows: rows,
                 discount: document.getElementById('qtDiscount').value,
                 notes: document.getElementById('qtNotes') ? document.getElementById('qtNotes').value : '',
-                billingType: document.getElementById('qtBillingType') ? document.getElementById('qtBillingType').value : 'deposit_50',
+                billingType: document.getElementById('qtBillingType') ? document.getElementById('qtBillingType').value : '',
                 billingAmount: document.getElementById('qtBillingAmount') ? document.getElementById('qtBillingAmount').value : '0',
                 showShopAddress: document.getElementById('qtShowShopAddress') ? document.getElementById('qtShowShopAddress').checked : false,
                 pageChannel: document.getElementById('qtPageChannel') ? document.getElementById('qtPageChannel').value : '',
@@ -2308,7 +2309,7 @@
 
             // Reset billing fields กลับ default
             const billingTypeEl = document.getElementById('qtBillingType');
-            if (billingTypeEl) billingTypeEl.value = 'deposit_50';
+            if (billingTypeEl) billingTypeEl.value = '';
             const billingAmountEl = document.getElementById('qtBillingAmount');
             if (billingAmountEl) billingAmountEl.value = '0';
             
@@ -2569,13 +2570,17 @@
             // Billing fields: restore ตอน edit ใบ IN เดิม / reset ตอน newFromSource
             if (document.getElementById('qtBillingType')) {
                 if (options.useBillingAsTotal) {
-                    // RC ไม่ใช้ billing — ตั้ง default ไว้เฉยๆ (section ถูกซ่อนอยู่แล้ว)
-                    document.getElementById('qtBillingType').value = 'deposit_50';
+                    // RC ไม่ใช้ billing — section ถูกซ่อนอยู่แล้ว
+                    document.getElementById('qtBillingType').value = '';
+                } else if (options.keepDocType) {
+                    // QT→IN (newFromSource): เริ่มที่ "โปรดเลือก" เสมอ ไม่รับค่า billingType จาก QT
+                    document.getElementById('qtBillingType').value = '';
                 } else if (data.billingType) {
+                    // edit IN เดิม: restore ค่าที่บันทึกไว้
                     document.getElementById('qtBillingType').value = data.billingType;
-                } else if (!options.keepDocType) {
-                    // edit mode ของใบ QT/RC ที่ไม่มี billingType → default
-                    document.getElementById('qtBillingType').value = 'deposit_50';
+                } else {
+                    // edit QT/RC ที่ไม่มี billingType → ไม่เลือก
+                    document.getElementById('qtBillingType').value = '';
                 }
             }
             if (document.getElementById('qtBillingAmount')) {

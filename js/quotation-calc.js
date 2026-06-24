@@ -121,7 +121,13 @@ function updateQtBilling(grandTotal) {
     const type = typeSel.value;
     let billing = 0;
 
-    if (type === 'custom') {
+    if (type === '') {
+        // ยังไม่เลือก — แสดง 0 / คงเหลือ = ยอดสุทธิเต็ม
+        amountInput.readOnly = true;
+        amountInput.value = '0';
+        remainingEl.textContent = formatNumber(grandTotal);
+        return;
+    } else if (type === 'custom') {
         amountInput.readOnly = false;
         billing = parseNumber(amountInput.value);
     } else {
@@ -149,6 +155,11 @@ function computeNetPayable() {
 }
 
 function onQtBillingTypeChange() {
+    const typeSel = document.getElementById('qtBillingType');
+    if (typeSel && typeSel.value === 'custom') {
+        const amountInput = document.getElementById('qtBillingAmount');
+        if (amountInput) amountInput.value = '0';
+    }
     updateQtBilling(computeNetPayable());
     saveQuotationForm();
 }
