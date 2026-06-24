@@ -165,8 +165,8 @@
         .image-gallery[data-count="many"] { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); }
 
         .bottom-section { border-top: 2px solid #000; display: flex; height: 32%; background-color: white; z-index: 2; position: relative; }
-        .bottom-left { flex: 1; padding: 10px 15px; font-size: 16px; font-weight: 600; display: flex; flex-direction: column; gap: 6px; justify-content: space-around; border-right: 2px solid #000; box-sizing: border-box; }
-        .bottom-right { flex: 1.3; padding: 10px 15px; display: flex; flex-direction: column; box-sizing: border-box; }
+        .bottom-left { flex: 1; padding: 10px 15px; font-size: 16px; font-weight: 600; display: flex; flex-direction: column; gap: 6px; justify-content: space-around; border-right: 2px solid #000; box-sizing: border-box; min-width: 0; overflow: hidden; }
+        .bottom-right { flex: 1.3; padding: 10px 15px; display: flex; flex-direction: column; box-sizing: border-box; min-width: 190px; }
         .bottom-row { display: flex; align-items: center; width: 100%; gap: 8px; }
         .bottom-row span { white-space: nowrap; }
         .inline-input { flex: 1; min-width: 0; border: none; border-bottom: 1px solid #000; outline: none; font-family: 'Sarabun', sans-serif; font-size: 18px; background: transparent; text-align: center; -webkit-appearance: none; border-radius: 0; margin: 0; padding: 2px; }
@@ -941,7 +941,7 @@
                         <label class="checkbox-group"><input type="checkbox"> งานภายนอก</label>
                     </div>
                     <div class="bottom-row">
-                        <span>ขนาด:</span> <input type="text" class="inline-input" style="flex: 1;">
+                        <span>ขนาด:</span> <input type="text" class="inline-input" style="flex: 1;"> <span style="white-space:nowrap;">สายไฟยาว</span> <input type="text" class="inline-input" style="width: 55px; flex: none; text-align: center;"> <span>ม.</span>
                     </div>
                     <div class="bottom-row">
                         <span>ประเภทงาน:</span>
@@ -960,8 +960,8 @@
                         <span>ขอบซิงค์ สี:</span> <input type="text" class="inline-input" style="flex: none; width: 65px;">
                         <span>รหัสสี:</span> <input type="text" class="inline-input" style="flex: none; width: 160px;">
                     </div>
-                    <div class="bottom-row">
-                        <span>สายไฟยาว</span> <input type="text" class="inline-input" style="width: 60px; flex: none; text-align: center;"> <span>ม.</span>
+                    <div class="bottom-row" style="gap: 4px;">
+                        <span>อำเภอ:</span> <input type="text" class="inline-input" style="flex: 1;"> <span>จว.:</span> <input type="text" class="inline-input" style="flex: 1;">
                     </div>
                 </div>
 
