@@ -2611,11 +2611,20 @@
             document.getElementById('qtCustomerName').value = data.customerName || '';
             document.getElementById('qtCustomerAddress').value = data.customerAddress || '';
             document.getElementById('qtCustomerPhone').value = data.customerPhone || '';
-            // วันที่
-            if (data.date) {
-                document.getElementById('qtDate').value = data.date;
-                formatDate(document.getElementById('qtDate'), 'dispQtDate');
-            }
+            // วันที่: newFromSource → ใช้วันนี้เสมอ, edit → ใช้วันที่บันทึกไว้
+            (function() {
+                var qtDateEl = document.getElementById('qtDate');
+                if (options.keepDocType) {
+                    var t = new Date();
+                    var yyyy = t.getFullYear();
+                    var mm = ('0' + (t.getMonth() + 1)).slice(-2);
+                    var dd = ('0' + t.getDate()).slice(-2);
+                    qtDateEl.value = yyyy + '-' + mm + '-' + dd;
+                } else if (data.date) {
+                    qtDateEl.value = data.date;
+                }
+                formatDate(qtDateEl, 'dispQtDate');
+            })();
             // รายการ
             document.getElementById('qtTableBody').innerHTML = '';
             if (options.useBillingAsTotal && Number(data.billingAmount) > 0) {
@@ -2808,6 +2817,7 @@
                             customerName: formData.customerName,
                             customerAddress: formData.customerAddress,
                             customerPhone: formData.customerPhone,
+                            date: formData.date,
                             items: itemsJson,
                             subtotal: subtotal,
                             discount: discount,
@@ -2883,6 +2893,7 @@
                             customerName: formData.customerName,
                             customerAddress: formData.customerAddress,
                             customerPhone: formData.customerPhone,
+                            date: formData.date,
                             items: itemsJson,
                             subtotal: subtotal,
                             discount: discount,
@@ -3056,7 +3067,7 @@
                         span.style.padding = computed.padding;
                         span.style.color = computed.color;
                         // คงการจัดข้อความ
-                        if (input.classList.contains('text-right')) span.style.textAlign = 'right';
+                        if (input.classList.contains('text-right') || input.id === 'dispQtDate') span.style.textAlign = 'right';
                         if (input.classList.contains('text-center')) span.style.textAlign = 'center';
                         span.style.display = 'inline-block';
                         span.style.width = '100%';
