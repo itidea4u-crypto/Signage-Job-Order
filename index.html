@@ -1219,6 +1219,21 @@
 
                         <!-- ===== Billing Plan (แสดงเฉพาะใบแจ้งหนี้) ===== -->
                         <div id="qtBillingSection" style="display: none;">
+                            <!-- สรุปยอด QT (แสดงเฉพาะ QT→IN) -->
+                            <div id="qtBillingSummary" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:6px 10px; margin-bottom:6px; font-size:13px; color:#166534;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span>ยอดสุทธิจาก QT :</span>
+                                    <span id="qtSummaryNet" style="font-weight:600;">0</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span>เคยเรียกเก็บแล้ว :</span>
+                                    <span id="qtSummaryBilled" style="color:#dc2626; font-weight:600;">0</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; border-top:1px solid #bbf7d0; margin-top:4px; padding-top:4px;">
+                                    <span>ยอดคงเหลือที่ยังไม่เรียก :</span>
+                                    <span id="qtSummaryRemaining" style="font-weight:700;">0</span>
+                                </div>
+                            </div>
                             <div class="qt-summary-row divider" style="padding-top: 6px;">
                                 <span class="label">เงื่อนไขเรียกเก็บ</span>
                                 <select id="qtBillingType" onchange="onQtBillingTypeChange()" style="padding: 3px 6px; font-family: 'Sarabun', sans-serif; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; outline: none; max-width: 60%;">
@@ -1226,6 +1241,7 @@
                                     <option value="deposit_50">มัดจำ 50%</option>
                                     <option value="final_50">งวดที่ 2 จำนวน 50%</option>
                                     <option value="full">ชำระเต็มจำนวน</option>
+                                    <option value="remaining_balance" id="qtRemainingBalanceOption" disabled hidden>ยอดคงเหลือทั้งหมด</option>
                                     <option value="custom">กำหนดเอง</option>
                                 </select>
                             </div>
@@ -1304,6 +1320,11 @@
         let qtCurrentRowIndex = null;
         let qtCurrentSheetName = null;
         let qtRefNo = null; // เลขเอกสารต้นทาง (QT→IN/RC หรือ IN→RC)
+
+        // ===== QT→IN Billing Summary state =====
+        let qtBilledSoFar = 0;
+        let qtRemainingBalance = 0;
+        let qtBillingSummarySourceQt = null;
 
         // ============================================================
         // ImageManager: จัดการรูปในแต่ละโหมด (เก็บเป็น array → ลบ/เพิ่มได้)
@@ -2077,6 +2098,7 @@
 
             // ล้าง ref เมื่อเปลี่ยน docType
             clearQtRefDisplay();
+            hideQtBillingSummary();
 
             saveQuotationForm();
         }
@@ -2312,6 +2334,7 @@
             if (billingTypeEl) billingTypeEl.value = '';
             const billingAmountEl = document.getElementById('qtBillingAmount');
             if (billingAmountEl) billingAmountEl.value = '0';
+            hideQtBillingSummary();
             
             // ล้างแถว แล้วเพิ่มแถวเปล่า 4 แถว
             document.getElementById('qtTableBody').innerHTML = '';
@@ -2485,6 +2508,36 @@
                     setQtRefDisplay(searchInput);
                     statusEl.textContent = `✅ โหลดข้อมูลจาก ${searchInput} แล้ว`;
                     statusEl.style.color = '#16a34a';
+
+                    // QT→IN: ดึงประวัติ IN ที่อ้างอิง QT นี้ เพื่อคำนวณยอดคงเหลือ
+                    if (sourcePrefix === 'QT' && targetPrefix === 'IN') {
+                        fetch(API_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({ action: "getInvoicesByQtRef", qtRef: searchInput })
+                        })
+                        .then(r => r.json())
+                        .then(bd => {
+                            if (bd.status !== 'success') return; // backend error — ไม่เปิด option
+                            const billed = Number(bd.totalBilled) || 0;
+                            const net = computeNetPayable();
+                            qtBilledSoFar = billed;
+                            qtRemainingBalance = Math.max(0, net - billed);
+                            qtBillingSummarySourceQt = searchInput;
+                            showQtBillingSummary(net, billed, qtRemainingBalance);
+                            // re-trigger ถ้าเลือก remaining_balance ค้างอยู่
+                            const typeSel = document.getElementById('qtBillingType');
+                            if (typeSel && typeSel.value === 'remaining_balance') {
+                                updateQtBilling(net);
+                            }
+                        })
+                        .catch(() => {
+                            // network error: fallback ปลอดภัย — ไม่แสดง summary ไม่เปิด option
+                            qtBilledSoFar = 0;
+                            qtRemainingBalance = 0;
+                            qtBillingSummarySourceQt = null;
+                        });
+                    }
                 } else {
                     // โหมด: แก้ไขใบเดิม (source === target)
                     populateQuotationForm(data);
@@ -2517,6 +2570,29 @@
             if (refRow) refRow.style.display = 'none';
             const refDisplay = document.getElementById('qtRefDisplay');
             if (refDisplay) refDisplay.textContent = '';
+        }
+
+        function showQtBillingSummary(net, billed, remaining) {
+            const el = document.getElementById('qtBillingSummary');
+            if (!el) return;
+            document.getElementById('qtSummaryNet').textContent       = formatNumber(net);
+            document.getElementById('qtSummaryBilled').textContent    = formatNumber(billed);
+            document.getElementById('qtSummaryRemaining').textContent = formatNumber(remaining);
+            el.style.display = '';
+            const opt = document.getElementById('qtRemainingBalanceOption');
+            if (opt) { opt.disabled = false; opt.hidden = false; }
+        }
+
+        function hideQtBillingSummary() {
+            qtBilledSoFar = 0;
+            qtRemainingBalance = 0;
+            qtBillingSummarySourceQt = null;
+            const el = document.getElementById('qtBillingSummary');
+            if (el) el.style.display = 'none';
+            const opt = document.getElementById('qtRemainingBalanceOption');
+            if (opt) { opt.disabled = true; opt.hidden = true; }
+            const typeSel = document.getElementById('qtBillingType');
+            if (typeSel && typeSel.value === 'remaining_balance') typeSel.value = '';
         }
 
         function populateQuotationForm(data, options) {

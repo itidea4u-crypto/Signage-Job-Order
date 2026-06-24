@@ -127,6 +127,13 @@ function updateQtBilling(grandTotal) {
         amountInput.value = '0';
         remainingEl.textContent = formatNumber(grandTotal);
         return;
+    } else if (type === 'remaining_balance') {
+        // ยอดคงเหลือทั้งหมด — ใช้ qtRemainingBalance จาก QT→IN summary
+        const bal = (typeof qtRemainingBalance !== 'undefined') ? qtRemainingBalance : 0;
+        amountInput.readOnly = true;
+        amountInput.value = formatNumber(bal);
+        remainingEl.textContent = '0';
+        return;
     } else if (type === 'custom') {
         amountInput.readOnly = false;
         billing = parseNumber(amountInput.value);
