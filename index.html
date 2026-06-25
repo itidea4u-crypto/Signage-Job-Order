@@ -2408,9 +2408,10 @@
             const slot = document.getElementById('qtAttach' + num);
             if (!slot) return;
             if (qtAttachData[num]) {
+                const isCompanyBank = (qtAttachData[num] === COMPANY_BANK_IMG);
                 slot.innerHTML = `
                     <img class="preview" src="${qtAttachData[num]}" alt="รูปแนบ">
-                    <button type="button" class="btn-remove-attach" data-no-capture="true" onclick="removeQtAttach(${num})">✕</button>
+                    ${isCompanyBank ? '' : `<button type="button" class="btn-remove-attach" data-no-capture="true" onclick="removeQtAttach(${num})">✕</button>`}
                 `;
                 slot.onclick = null;
             } else {
@@ -2427,6 +2428,8 @@
             renderQtAttach(num);
         }
 
+        const COMPANY_BANK_IMG = 'assets/company-bank-kbank.png';
+
         function onBankAccountTypeChange() {
             const val = document.getElementById('qtBankAccountType') ? document.getElementById('qtBankAccountType').value : 'shop';
             const idSection = document.getElementById('qtIdCardSection');
@@ -2434,9 +2437,16 @@
             if (idSection) idSection.style.display = (val === 'personal') ? 'block' : 'none';
             // ปรับ border-radius ของ slot 3 ตามว่ามี slot 4 อยู่ไหม
             if (attach3) attach3.style.borderRadius = (val === 'personal') ? '0' : '0 0 6px 6px';
-            if (val !== 'personal') {
+            if (val === 'shop') {
+                qtAttachData[3] = COMPANY_BANK_IMG;
+                renderQtAttach(3);
                 qtAttachData[4] = null;
                 renderQtAttach(4);
+            } else if (val === 'personal') {
+                if (qtAttachData[3] === COMPANY_BANK_IMG) {
+                    qtAttachData[3] = null;
+                    renderQtAttach(3);
+                }
             }
             saveQuotationForm();
         }
@@ -3311,6 +3321,7 @@
                 updateQtTotals();
             }
             // โหลด autosave ของใบเสนอราคา (จะ override แถวเริ่มต้นถ้ามีข้อมูล)
+            onBankAccountTypeChange();
             setTimeout(loadQuotationForm, 150);
 
             // ผูก auto-save ของช่องลูกค้าใบเสนอราคา
