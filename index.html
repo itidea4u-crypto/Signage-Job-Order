@@ -2168,6 +2168,19 @@
             } else {
                 toggleShopAddress();
             }
+            // เปลี่ยน label/placeholder ช่อง pageChannel ตาม theme
+            const channelInput = document.getElementById('qtPageChannel');
+            if (channelInput) {
+                const channelRow = channelInput.closest('.qt-info-row');
+                const channelLabel = channelRow ? channelRow.querySelector('.label') : null;
+                if (select.value === 'companybill') {
+                    if (channelLabel) channelLabel.textContent = 'เลขประจำตัวผู้เสียภาษี :';
+                    channelInput.placeholder = 'เลขประจำตัวผู้เสียภาษี';
+                } else {
+                    if (channelLabel) channelLabel.textContent = 'ช่องทาง :';
+                    channelInput.placeholder = 'Facebook / Line / etc.';
+                }
+            }
             saveQuotationForm();
         }
 
