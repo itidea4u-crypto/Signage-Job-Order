@@ -1722,8 +1722,16 @@
                 onclone: function (clonedDoc) {
                     const clonedBox = clonedDoc.getElementById(elementId);
                     clonedBox.style.width = boxWidth + 'px';
-                    clonedBox.style.height = boxHeight + 'px';
                     clonedBox.style.margin = '0';
+                    // Change A: jobOrderBox ยืดตามเนื้อหา ป้องกันข้อความโดนตัด
+                    if (elementId === 'jobOrderBox') {
+                        clonedBox.style.height = 'auto';
+                        clonedBox.style.minHeight = boxHeight + 'px';
+                        const bsEl = clonedBox.querySelector('.bottom-section');
+                        if (bsEl) { bsEl.style.height = 'auto'; bsEl.style.minHeight = '220px'; }
+                    } else {
+                        clonedBox.style.height = boxHeight + 'px';
+                    }
 
                     // ซ่อน placeholder
                     const placeholders = clonedDoc.querySelectorAll('.canvas-placeholder');
@@ -1800,7 +1808,13 @@
                         }
 
                         div.style.width = '100%';
-                        div.style.height = textarea.offsetHeight + 'px';
+                        // Change B: note-textarea ให้ยืดตามเนื้อหา ไม่ตัดข้อความ
+                        if (textarea.classList.contains('note-textarea')) {
+                            div.style.height = 'auto';
+                            div.style.minHeight = textarea.offsetHeight + 'px';
+                        } else {
+                            div.style.height = textarea.offsetHeight + 'px';
+                        }
                         div.style.padding = computed.padding;
                         div.style.fontFamily = computed.fontFamily;
                         div.style.fontSize = fontSize;
@@ -1810,7 +1824,8 @@
                         div.style.boxSizing = 'border-box';
                         div.style.wordWrap = 'break-word';
                         div.style.whiteSpace = 'pre-wrap';
-                        div.style.overflow = 'hidden';
+                        // Change C: note-textarea แสดงเนื้อหาครบ ไม่ clip
+                        div.style.overflow = textarea.classList.contains('note-textarea') ? 'visible' : 'hidden';
                         textarea.parentNode.replaceChild(div, textarea);
                     });
                 }
