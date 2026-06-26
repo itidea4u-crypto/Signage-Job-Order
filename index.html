@@ -1167,13 +1167,6 @@
                         <input type="file" id="qtAttachInput3" accept="image/*" style="display:none" onchange="handleQtAttach(this, 3)">
                         <div class="placeholder">📷<br>แตะเพื่อแนบ<br>QR / เลขบัญชี</div>
                     </div>
-                    <div id="qtIdCardSection" style="display:none; margin-top: 4px;">
-                        <div style="font-size:12px; font-weight:700; color:#dc2626; padding:3px 6px; background:#fff1f2; border:1px solid #fca5a5; border-radius:4px 4px 0 0;">📋 สำเนาบัตรประชาชน</div>
-                        <div class="qt-attachment-slot" id="qtAttach4" onclick="triggerQtAttach(4)" style="min-height:80px; border-top:none; border-radius:0 0 4px 4px;">
-                            <input type="file" id="qtAttachInput4" accept="image/*" style="display:none" onchange="handleQtAttach(this, 4)">
-                            <div class="placeholder">📷<br>แตะเพื่อแนบ<br>สำเนาบัตรฯ</div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- คอลัมน์ 3: สรุปยอด -->
@@ -2384,7 +2377,7 @@
         }
 
         // ===== QT ATTACHMENTS =====
-        const qtAttachData = { 1: null, 2: null, 3: null, 4: null }; // 1,2=รูปป้าย, 3=QR/บัญชี, 4=สำเนาบัตรฯ
+        const qtAttachData = { 1: null, 2: null, 3: null }; // 1,2=รูปป้าย, 3=QR/บัญชี
 
         function triggerQtAttach(num) {
             // ถ้ามีรูปแล้ว → ไม่ต้อง trigger (จะกดปุ่ม X แทน)
@@ -2432,16 +2425,9 @@
 
         function onBankAccountTypeChange() {
             const val = document.getElementById('qtBankAccountType') ? document.getElementById('qtBankAccountType').value : 'shop';
-            const idSection = document.getElementById('qtIdCardSection');
-            const attach3 = document.getElementById('qtAttach3');
-            if (idSection) idSection.style.display = (val === 'personal') ? 'block' : 'none';
-            // ปรับ border-radius ของ slot 3 ตามว่ามี slot 4 อยู่ไหม
-            if (attach3) attach3.style.borderRadius = (val === 'personal') ? '0' : '0 0 6px 6px';
             if (val === 'shop') {
                 qtAttachData[3] = COMPANY_BANK_IMG;
                 renderQtAttach(3);
-                qtAttachData[4] = null;
-                renderQtAttach(4);
             } else if (val === 'personal') {
                 if (qtAttachData[3] === COMPANY_BANK_IMG) {
                     qtAttachData[3] = null;
@@ -2455,11 +2441,9 @@
             qtAttachData[1] = null;
             qtAttachData[2] = null;
             qtAttachData[3] = null;
-            qtAttachData[4] = null;
             renderQtAttach(1);
             renderQtAttach(2);
             renderQtAttach(3);
-            renderQtAttach(4);
         }
 
         // ===== QT FLOW / API =====
@@ -3020,7 +3004,7 @@
                         }
                     }
 
-                    // แทนที่ช่องแนบรูป QR (slot 3) และสำเนาบัตรฯ (slot 4)
+                    // แทนที่ช่องแนบรูป QR/บัญชี (slot 3)
                     const bankSection = clonedDoc.getElementById('qtBankSection');
                     if (bankSection) {
                         // แปลง select ประเภทบัญชีเป็น span
@@ -3043,24 +3027,8 @@
                                 qrSlot.style.display = 'none';
                             }
                         }
-                        // Slot 4: สำเนาบัตรประชาชน (เฉพาะ personal)
-                        const isPersonal = document.getElementById('qtBankAccountType') && document.getElementById('qtBankAccountType').value === 'personal';
-                        const idSection = clonedDoc.getElementById('qtIdCardSection');
-                        if (idSection) {
-                            if (isPersonal && qtAttachData[4]) {
-                                idSection.style.display = 'block';
-                                const idSlot = clonedDoc.getElementById('qtAttach4');
-                                if (idSlot) {
-                                    idSlot.innerHTML = `<img style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;object-position:center;display:block;margin:auto;" src="${qtAttachData[4]}">`;
-                                    idSlot.style.border = '1px solid #e5e7eb';
-                                    idSlot.style.cursor = 'default';
-                                }
-                            } else {
-                                idSection.style.display = 'none';
-                            }
-                        }
-                        // ถ้าไม่มีรูปใดเลย ซ่อนทั้งคอลัมน์
-                        if (!qtAttachData[3] && !(isPersonal && qtAttachData[4])) {
+                        // ถ้าไม่มีรูปบัญชี/QR ซ่อนทั้งคอลัมน์
+                        if (!qtAttachData[3]) {
                             bankSection.style.display = 'none';
                         }
                     }
