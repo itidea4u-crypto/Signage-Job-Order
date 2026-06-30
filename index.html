@@ -1893,6 +1893,10 @@
                 const runNo = data.runNo;
                 const rowIndex = data.rowIndex;
 
+                if (!runNo) {
+                    throw new Error("ยังไม่มีเลขใบงาน กรุณารอระบบโหลดเลขก่อน แล้วลองบันทึกใหม่");
+                }
+
                 runNoInput.value = runNo;
                 runNoInput.style.color = "black";
                 runNoInput.style.fontWeight = "bold";
@@ -1933,6 +1937,8 @@
             })
             .catch(error => {
                 alert("❌ เกิดข้อผิดพลาด: " + error.message + "\n\nกรุณาลองใหม่อีกครั้ง");
+            })
+            .finally(() => {
                 btnSave.innerHTML = originalBtnText;
                 btnSave.disabled = false;
             });
